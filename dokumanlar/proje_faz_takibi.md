@@ -50,7 +50,7 @@
 - `lib/screens/home_screen.dart` dosyasi guncellenerek liste ogesine tiklandiginda `RecipeDetailScreen` ekranina gecis akisi baglandi.
 - Ana listedeki kart yapsi detay ekranina gecisle birlestirilerek temel gezinme akisi tamamlandi.
 
-## Faz 6: Test ve V2 Hazirliklari
+## Faz 6: Resim Secme, Kaydetme ve Goruntuleme
 - Durum: Tamamlandi
 - `pubspec.yaml` dosyasina `image_picker` bagimliligi eklendi ve `flutter pub get` calistirilarak paketler guncellendi.
 - `lib/screens/add_recipe_screen.dart` dosyasi guncellenerek galeriden resim secme akisi eklendi.
@@ -59,3 +59,13 @@
 - `lib/screens/recipe_detail_screen.dart` dosyasi guncellenerek tarif resmini dinamik olarak yukleyen yapi eklendi.
 - Detay ekraninda, yerel mod icin `Image.file`, ilerideki web modu icin `Image.network` kullanan V1/V2 uyumlu gorsel gosterim akisi kuruldu.
 - Resim bulunamadigi veya yuklenemedigi durumlar icin yer tutucu gorsel geri donus yapi korundu.
+
+## Faz 7: Tarif Duzenleme ve Silme Islemleri
+- Durum: Tamamlandi
+- `lib/screens/edit_recipe_screen.dart` dosyasi eklendi.
+- Duzenleme ekrani, mevcut tarif verileriyle dolu form alanlari ve istege bagli yeni resim secme akisiyla olusturuldu.
+- Guncellenen tarif verileri `DatabaseHelper.instance.updateRecipe(...)` ile SQLite veritabanina yazilacak sekilde baglandi.
+- `lib/screens/recipe_detail_screen.dart` dosyasi stateful yapiya tasinarak guncel tarif bilgisini ekranda yenileyen akis eklendi.
+- Detay ekranina duzenle ve sil eylemleri icin `AppBar` aksiyonlari eklendi.
+- Silme islemi icin kullanici onayi alan bir `AlertDialog` ve `DatabaseHelper.instance.deleteRecipe(...)` tabanli silme akisi kuruldu.
+- `lib/screens/home_screen.dart` dosyasi guncellenerek detay ekranindan donuslerde listenin otomatik yenilenmesi saglandi.

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../database/database_helper.dart';
 import '../models/recipe_model.dart';
 import 'add_recipe_screen.dart';
-import 'recipe_detail_screen.dart'; // Detay ekranı import edildi
+import 'recipe_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -71,14 +71,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  onTap: () {
-                    // Tıklandığında detay sayfasına yönlendir
-                    Navigator.push(
+                  onTap: () async {
+                    // Detay sayfasına git ve dönüşü bekle
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => RecipeDetailScreen(recipe: recipe),
                       ),
                     );
+                    
+                    // Eğer detay sayfasından 'true' veya bir tarif döndüyse listeyi yenile
+                    if (result != null) {
+                      _refreshRecipes();
+                    }
                   },
                 ),
               );
