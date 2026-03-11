@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/database_helper.dart';
 import '../models/recipe_model.dart';
+import 'add_recipe_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _refreshRecipes();
   }
 
+  // Veritabanından verileri çekip arayüzü yenileyen fonksiyon
   void _refreshRecipes() {
     setState(() {
       _recipesFuture = DatabaseHelper.instance.readAllRecipes();
@@ -70,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
-                    // TODO: Tarif detay sayfasına git
+                    // TODO: Tarif detay sayfasına git (Sonraki fazlarda)
                   },
                 ),
               );
@@ -79,8 +81,16 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Tarif Ekleme sayfasına yönlendirilecek
+        onPressed: () async {
+          // Yeni tarif ekleme sayfasına git ve oradan dönüşte (veri eklendiyse) listeyi yenile
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
+          );
+          
+          if (result == true) {
+            _refreshRecipes();
+          }
         },
         icon: const Icon(Icons.add),
         label: const Text('Yeni Tarif'),

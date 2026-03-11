@@ -31,8 +31,15 @@
 - Tarifleri veritabanindan okumak icin `FutureBuilder<List<Recipe>>` tabanli listeleme akisi kuruldu.
 - Yeni tarif ekleme ve detay ekranina gecis icin temel buton ve TODO noktalarina sahip iskelet olusturuldu.
 
-## Faz 4: UI Tasarimi
-- Durum: Bekliyor
+## Faz 4: Tarif Ekleme Ekrani ve Veri Kayit Islemleri
+- Durum: Tamamlandi
+- `lib/screens/add_recipe_screen.dart` dosyasi eklendi.
+- Yeni tarif ekleme formu; yemek adi, malzemeler ve hazirlanis alanlariyla olusturuldu.
+- Form icin `GlobalKey<FormState>` tabanli dogrulama kurallari eklendi.
+- Girilen verilerden `Recipe` nesnesi uretilerek `DatabaseHelper.instance.createRecipe(...)` ile SQLite veritabanina kayit akisi baglandi.
+- Kayit sonrasi kullaniciya `SnackBar` ile durum mesaji gosterildi ve ekrandan sonuc dondurulerek cikis saglandi.
+- `lib/screens/home_screen.dart` guncellenerek `AddRecipeScreen` yonlendirmesi eklendi.
+- Tarif ekleme ekranindan basarili donus sonrasinda ana listedeki verilerin yenilenmesi icin `_refreshRecipes()` entegrasyonu yapildi.
 
 ## Faz 5: Uygulama Akisi ve Ozellikler
 - Durum: Bekliyor
