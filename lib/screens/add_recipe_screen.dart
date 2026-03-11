@@ -17,6 +17,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _ingredientsController = TextEditingController();
   final _instructionsController = TextEditingController();
   
+  String? _selectedCategory;
+  final List<String> _categories = [
+    'Çorba', 'Ana Yemek', 'Sebze Yemeği', 'Et Yemeği', 
+    'Baklagil', 'Dolma-Sarma', 'Hamur İşi', 'Pilav', 
+    'Meze', 'Salata', 'Kahvaltılık', 'Tatlı'
+  ];
+
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
 
@@ -34,12 +41,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       String? savedImageName;
       
       if (_selectedImage != null) {
-        // Resmi yerel klasöre kopyala ve sadece adını al (Kuryeye teslim)
         savedImageName = await DatabaseHelper.instance.saveImageLocally(_selectedImage!);
       }
 
       final newRecipe = Recipe(
         title: _titleController.text,
+        category: _selectedCategory!, // Kategori eklendi
         ingredients: _ingredientsController.text,
         instructions: _instructionsController.text,
         createdAt: DateTime.now().toIso8601String(),
@@ -78,7 +85,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // --- RESİM SEÇME ALANI ---
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -112,6 +118,28 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   prefixIcon: Icon(Icons.restaurant),
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Lütfen yemek adını girin' : null,
+              ),
+              const SizedBox(height: 16),
+              // --- KATEGORİ SEÇİCİ ---
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Yemek Grubu / Kategori',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.category),
+                ),
+                value: _selectedCategory,
+                items: _categories.map((String category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedCategory = newValue;
+                  });
+                },
+                validator: (value) => value == null ? 'Lütfen bir kategori seçin' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(

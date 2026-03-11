@@ -69,3 +69,13 @@
 - Detay ekranina duzenle ve sil eylemleri icin `AppBar` aksiyonlari eklendi.
 - Silme islemi icin kullanici onayi alan bir `AlertDialog` ve `DatabaseHelper.instance.deleteRecipe(...)` tabanli silme akisi kuruldu.
 - `lib/screens/home_screen.dart` dosyasi guncellenerek detay ekranindan donuslerde listenin otomatik yenilenmesi saglandi.
+
+## Faz 8: Kategori ve Arama Sistemi
+- Durum: Tamamlandi
+- `lib/models/recipe_model.dart` dosyasina `category` alani eklendi.
+- `lib/database/database_helper.dart` icindeki `recipes` tablosu semasi `category` sutununu icerecek sekilde guncellendi ve yeni veritabani dosyasi olarak `yemek_kitabi_v2.db` kullanilmaya baslandi.
+- `lib/screens/add_recipe_screen.dart` dosyasina kategori secimi icin `DropdownButtonFormField` eklendi.
+- `lib/screens/edit_recipe_screen.dart` dosyasi mevcut tarif kategorisini duzenleyebilecek sekilde guncellendi.
+- `lib/screens/home_screen.dart` dosyasi arama cubugu, kategori filtreleri ve bellekte anlik filtreleme yapan listeleme akisiyla yenilendi.
+- Ana ekranda kategoriye ve arama metnine gore filtrelenmis tarif listesi gosterilecek sekilde `_allRecipes` ve `_filteredRecipes` yapisi kuruldu.
+- `lib/screens/recipe_detail_screen.dart` dosyasina secili tarifin kategorisini gosteren kategori rozeti eklendi.

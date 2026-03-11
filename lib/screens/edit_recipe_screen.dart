@@ -18,6 +18,13 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late TextEditingController _titleController;
   late TextEditingController _ingredientsController;
   late TextEditingController _instructionsController;
+  late String _selectedCategory;
+  
+  final List<String> _categories = [
+    'Çorba', 'Ana Yemek', 'Sebze Yemeği', 'Et Yemeği', 
+    'Baklagil', 'Dolma-Sarma', 'Hamur İşi', 'Pilav', 
+    'Meze', 'Salata', 'Kahvaltılık', 'Tatlı'
+  ];
   
   File? _newSelectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -25,8 +32,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   @override
   void initState() {
     super.initState();
-    // Kontrolcüleri mevcut tarifin verileriyle dolduruyoruz
     _titleController = TextEditingController(text: widget.recipe.title);
+    _selectedCategory = widget.recipe.category; // Mevcut kategoriyi yükle
     _ingredientsController = TextEditingController(text: widget.recipe.ingredients);
     _instructionsController = TextEditingController(text: widget.recipe.instructions);
   }
@@ -42,30 +49,28 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
   Future<void> _updateRecipe() async {
     if (_formKey.currentState!.validate()) {
-      String? updatedImageName = widget.recipe.imageName; // Varsayılan olarak eski resmi tut
+      String? updatedImageName = widget.recipe.imageName; 
       
-      // Eğer yeni bir resim seçildiyse onu kaydet ve adını al
       if (_newSelectedImage != null) {
         updatedImageName = await DatabaseHelper.instance.saveImageLocally(_newSelectedImage!);
       }
 
       final updatedRecipe = Recipe(
-        id: widget.recipe.id, // ID aynı kalmalı ki güncelleme olsun
+        id: widget.recipe.id,
         title: _titleController.text,
+        category: _selectedCategory, // Güncellenmiş kategori
         ingredients: _ingredientsController.text,
         instructions: _instructionsController.text,
-        createdAt: widget.recipe.createdAt, // Oluşturulma tarihi değişmez
+        createdAt: widget.recipe.createdAt, 
         imageName: updatedImageName, 
       );
 
-      // Veritabanında güncelle
       await DatabaseHelper.instance.updateRecipe(updatedRecipe);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tarif başarıyla güncellendi!')),
         );
-        // Güncellenmiş nesneyi bir önceki ekrana (Detay Ekranına) geri gönder
         Navigator.pop(context, updatedRecipe); 
       }
     }
@@ -92,7 +97,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // --- RESİM ALANI ---
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -141,6 +145,30 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   prefixIcon: Icon(Icons.restaurant),
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Lütfen yemek adını girin' : null,
+              ),
+              const SizedBox(height: 16),
+              // --- KATEGORİ SEÇİCİ ---
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Yemek Grubu / Kategori',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.category),
+                ),
+                value: _selectedCategory,
+                items: _categories.map((String category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedCategory = newValue;
+                    });
+                  }
+                },
+                validator: (value) => value == null ? 'Lütfen bir kategori seçin' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(

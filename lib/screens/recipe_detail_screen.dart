@@ -19,10 +19,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _currentRecipe = widget.recipe; // Başlangıçta gelen tarifi state'e al
+    _currentRecipe = widget.recipe;
   }
 
-  // Silme Onay Penceresi
   Future<void> _confirmDelete() async {
     final bool? confirm = await showDialog(
       context: context,
@@ -46,7 +45,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     if (confirm == true && mounted) {
       await DatabaseHelper.instance.deleteRecipe(_currentRecipe.id!);
       if (mounted) {
-        // Ana ekrana 'true' döndürerek listenin yenilenmesini sağla
         Navigator.pop(context, true);
       }
     }
@@ -63,7 +61,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             icon: const Icon(Icons.edit),
             tooltip: 'Düzenle',
             onPressed: () async {
-              // Düzenleme ekranına git ve dönüşte güncellenmiş tarifi bekle
               final updatedRecipe = await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -71,7 +68,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ),
               );
 
-              // Eğer güncellenmiş bir tarif döndüyse, ekranı yenile
               if (updatedRecipe != null && updatedRecipe is Recipe) {
                 setState(() {
                   _currentRecipe = updatedRecipe;
@@ -130,8 +126,22 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             else
               _buildNoImagePlaceholder(),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             
+            // --- KATEGORİ ROZETİ ---
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.deepOrange,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                _currentRecipe.category,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
             const Row(
               children: [
                 Icon(Icons.shopping_basket, color: Colors.deepOrange),

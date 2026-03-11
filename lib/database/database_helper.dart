@@ -8,7 +8,6 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
 
-  // --- V1 / V2 MİMARİ KONTROLÜ ---
   static const bool isLocalMode = true; 
   static const String webBaseUrl = "https://www.sinankurtoglu.com/yemek_resimleri/";
 
@@ -16,7 +15,8 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('yemek_kitabi_v1.db');
+    // Veritabanı şeması değiştiği için v2'ye geçtik. Temiz bir DB oluşacak.
+    _database = await _initDB('yemek_kitabi_v2.db');
     return _database!;
   }
 
@@ -50,6 +50,7 @@ class DatabaseHelper {
     CREATE TABLE recipes (
       id $idType,
       title $textType,
+      category $textType,
       ingredients $textType,
       instructions $textType,
       image_name $textNullable,
@@ -57,8 +58,6 @@ class DatabaseHelper {
     )
     ''');
   }
-
-  // --- CRUD İŞLEMLERİ ---
 
   Future<int> createRecipe(Recipe recipe) async {
     final db = await instance.database;
@@ -89,8 +88,6 @@ class DatabaseHelper {
       whereArgs: [id],
     );
   }
-
-  // --- DOSYA YOLU VE RESİM YÖNETİMİ ---
 
   Future<String> getImagePath(String imageName) async {
     if (isLocalMode) {
