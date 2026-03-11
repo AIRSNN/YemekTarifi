@@ -42,7 +42,13 @@
 - Tarif ekleme ekranindan basarili donus sonrasinda ana listedeki verilerin yenilenmesi icin `_refreshRecipes()` entegrasyonu yapildi.
 
 ## Faz 5: Uygulama Akisi ve Ozellikler
-- Durum: Bekliyor
+- Durum: Tamamlandi
+- `lib/screens/recipe_detail_screen.dart` dosyasi eklendi.
+- Tarif detay ekrani; baslik, malzemeler ve hazirlanis bolumlerini gostercek sekilde olusturuldu.
+- Detay ekranina, ileride eklenecek tarif gorselleri icin yer tutucu resim alani eklendi.
+- Icerik, uzun tarif metinlerini desteklemek icin `SingleChildScrollView` yapisina tasindi.
+- `lib/screens/home_screen.dart` dosyasi guncellenerek liste ogesine tiklandiginda `RecipeDetailScreen` ekranina gecis akisi baglandi.
+- Ana listedeki kart yapsi detay ekranina gecisle birlestirilerek temel gezinme akisi tamamlandi.
 
 ## Faz 6: Test ve V2 Hazirliklari
 - Durum: Bekliyor

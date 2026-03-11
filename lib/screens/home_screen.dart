@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../database/database_helper.dart';
 import '../models/recipe_model.dart';
 import 'add_recipe_screen.dart';
+import 'recipe_detail_screen.dart'; // Detay ekranı import edildi
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,7 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _refreshRecipes();
   }
 
-  // Veritabanından verileri çekip arayüzü yenileyen fonksiyon
   void _refreshRecipes() {
     setState(() {
       _recipesFuture = DatabaseHelper.instance.readAllRecipes();
@@ -62,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(12),
                   leading: const CircleAvatar(
-                    backgroundColor: Colors.deepOrangeLight,
+                    backgroundColor: Colors.deepOrangeAccent,
                     child: Icon(Icons.restaurant_menu, color: Colors.white),
                   ),
                   title: Text(recipe.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -72,7 +72,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
-                    // TODO: Tarif detay sayfasına git (Sonraki fazlarda)
+                    // Tıklandığında detay sayfasına yönlendir
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RecipeDetailScreen(recipe: recipe),
+                      ),
+                    );
                   },
                 ),
               );
@@ -82,7 +88,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // Yeni tarif ekleme sayfasına git ve oradan dönüşte (veri eklendiyse) listeyi yenile
           final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
