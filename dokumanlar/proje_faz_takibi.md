@@ -10,7 +10,7 @@
 - Uygulama, sadece temel `MaterialApp` ve `Scaffold` iskeleti iceren "Yemek Kitabi" baslikli yapıya indirildi.
 - `dokumanlar` klasoru ve bu faz takip dosyasi olusturuldu.
 
-## Faz 2: Veritabani Mimarisi
+## Faz 2: Veritabani ve Model Katmani
 - Durum: Tamamlandi
 - `lib/database/database_helper.dart` dosyasi eklendi.
 - SQLite icin `DatabaseHelper` sinifi olusturuldu ve `sqflite_common_ffi` tabanli yerel veritabani kurulumu yapildi.
@@ -18,12 +18,18 @@
 - Tarifler icin `create`, `readAll`, `update` ve `delete` islemleri eklendi.
 - Yerel resim yolu uretimi ve resim dosyalarini uygulama klasorune kopyalama altyapisi eklendi.
 - V1 yerel mod ve V2 web tabanli gecis icin temel mimari kontrol sabitleri tanimlandi.
-
-## Faz 3: Veri Modelleri
-- Durum: Tamamlandi
 - `lib/models/recipe_model.dart` dosyasi eklendi.
 - `Recipe` modeli; tarif kaydinin alanlarini temsil edecek sekilde tanimlandi.
 - Veritabani ile veri alisverisi icin `toMap` ve `fromMap` donusumleri eklendi.
+
+## Faz 3: Ana Ekran Arayuzu ve SQLite Baslatma
+- Durum: Tamamlandi
+- `lib/main.dart` dosyasi guncellenerek Windows ve Linux masaustu icin `sqflite_common_ffi` baslatma ayarlari eklendi.
+- Uygulama temasi `deepOrange` tabanli Material 3 yapiya tasindi ve ana giris ekrani `HomeScreen` olarak ayarlandi.
+- `lib/screens/home_screen.dart` dosyasi eklendi.
+- Ana ekran icin uygulama cubugu, bos durum mesaji, yuklenme gostergesi ve tarif listesi altyapisi hazirlandi.
+- Tarifleri veritabanindan okumak icin `FutureBuilder<List<Recipe>>` tabanli listeleme akisi kuruldu.
+- Yeni tarif ekleme ve detay ekranina gecis icin temel buton ve TODO noktalarina sahip iskelet olusturuldu.
 
 ## Faz 4: UI Tasarimi
 - Durum: Bekliyor
