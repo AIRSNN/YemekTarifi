@@ -51,4 +51,11 @@
 - Ana listedeki kart yapsi detay ekranina gecisle birlestirilerek temel gezinme akisi tamamlandi.
 
 ## Faz 6: Test ve V2 Hazirliklari
-- Durum: Bekliyor
+- Durum: Tamamlandi
+- `pubspec.yaml` dosyasina `image_picker` bagimliligi eklendi ve `flutter pub get` calistirilarak paketler guncellendi.
+- `lib/screens/add_recipe_screen.dart` dosyasi guncellenerek galeriden resim secme akisi eklendi.
+- Secilen resim, form ekraninda onizleme olarak gosterilecek sekilde `File` tabanli yapi kuruldu.
+- Tarif kaydi sirasinda secilen resim `DatabaseHelper.instance.saveImageLocally(...)` ile uygulama klasorune kopyalanip sadece dosya adi veritabanina yazilacak sekilde baglandi.
+- `lib/screens/recipe_detail_screen.dart` dosyasi guncellenerek tarif resmini dinamik olarak yukleyen yapi eklendi.
+- Detay ekraninda, yerel mod icin `Image.file`, ilerideki web modu icin `Image.network` kullanan V1/V2 uyumlu gorsel gosterim akisi kuruldu.
+- Resim bulunamadigi veya yuklenemedigi durumlar icin yer tutucu gorsel geri donus yapi korundu.

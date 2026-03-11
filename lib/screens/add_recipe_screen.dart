@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/recipe_model.dart';
 import '../database/database_helper.dart';
 
@@ -14,26 +16,42 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _titleController = TextEditingController();
   final _ingredientsController = TextEditingController();
   final _instructionsController = TextEditingController();
+  
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
 
   Future<void> _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
+      String? savedImageName;
+      
+      if (_selectedImage != null) {
+        // Resmi yerel klasöre kopyala ve sadece adını al (Kuryeye teslim)
+        savedImageName = await DatabaseHelper.instance.saveImageLocally(_selectedImage!);
+      }
+
       final newRecipe = Recipe(
         title: _titleController.text,
         ingredients: _ingredientsController.text,
         instructions: _instructionsController.text,
         createdAt: DateTime.now().toIso8601String(),
-        // Resim ekleme mekanizması bir sonraki fazda eklenecek
-        imageName: null, 
+        imageName: savedImageName, 
       );
 
-      // Veritabanına kayıt işlemi (Kurye iş başında)
       await DatabaseHelper.instance.createRecipe(newRecipe);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tarif başarıyla veritabanına kaydedildi!')),
+          const SnackBar(content: Text('Tarif başarıyla kaydedildi!')),
         );
-        // Kayıt sonrası ana ekrana dön
         Navigator.pop(context, true); 
       }
     }
@@ -60,6 +78,32 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              // --- RESİM SEÇME ALANI ---
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade400),
+                  ),
+                  child: _selectedImage != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(_selectedImage!, fit: BoxFit.cover, width: double.infinity),
+                        )
+                      : const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                            SizedBox(height: 8),
+                            Text('Resim Ekle', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                          ],
+                        ),
+                ),
+              ),
+              const SizedBox(height: 24),
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
