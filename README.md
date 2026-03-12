@@ -1,22 +1,17 @@
-# Proje: Flutter Yemek Kitabı (Windows Desktop)
-# Durum: Faz 8 Tamamlandı (Kategori & Arama Sistemi)
+# yemektarifi
 
-## 🛠 Teknik Mimari
-- **Veritabanı:** SQLite (sqflite_ffi) - Versiyon: v2
-- **Model Yapısı:** ID, Başlık, Kategori, Malzemeler, Hazırlanış, Resim Yolu, Tarih.
-- **Kategoriler:** Çorba, Ana Yemek, Sebze, Et, Baklagil, Hamur İşi, Pilav, Meze, Salata, Kahvaltılık, Tatlı.
+A new Flutter project.
 
-## 📁 Dosya Yapısı ve Mevcut Kodlar:
+## Getting Started
 
-1. **Model (lib/models/recipe_model.dart):** 'category' sütunu eklenmiş tam model.
-2. **Database (lib/database/database_helper.dart):** 'yemek_kitabi_v2.db' üzerinden CRUD ve kategori desteği.
-3. **Home Screen (lib/screens/home_screen.dart):** SearchBar (Arama) ve Kategori Chip-Filter (Filtreleme) içeren ana sayfa.
-4. **Add/Edit Screens:** Dropdown menü ile kategori seçimi ve yerel resim kaydetme özelliği.
-5. **Detail Screen:** Kategori rozeti ve gelişmiş görsel sunum.
+This project is a starting point for a Flutter application.
 
-## 🚀 Son Durum
-Uygulama Windows üzerinde çalışıyor. CRUD döngüsü eksiksiz. Kullanıcı yemek adına veya malzemeye göre arama yapabiliyor, yatay menüden kategori seçerek listeyi daraltabiliyor.
+A few resources to get you started if this is your first Flutter project:
 
-## 🔜 Gelecek Planı (Yarın):
-- Tarif paylaşma (Metin olarak kopyalama veya WhatsApp/Email taslağı).
-- Belki favorilere ekleme veya pişirme süresi gibi ekstra detaylar.
+- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.

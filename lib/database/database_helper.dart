@@ -8,15 +8,14 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
 
-  static const bool isLocalMode = true; 
+  static const bool isLocalMode = true;
   static const String webBaseUrl = "https://www.sinankurtoglu.com/yemek_resimleri/";
 
   DatabaseHelper._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    // Veritabanı şeması değiştiği için v2'ye geçtik. Temiz bir DB oluşacak.
-    _database = await _initDB('yemek_kitabi_v2.db');
+    _database = await _initDB('yemek_kitabi_v3.db');
     return _database!;
   }
 
@@ -36,26 +35,74 @@ class DatabaseHelper {
       dbPath,
       options: OpenDatabaseOptions(
         version: 1,
+        onConfigure: _onConfigure,
         onCreate: _createDB,
       ),
     );
   }
 
+  Future _onConfigure(Database db) async {
+    await db.execute('PRAGMA foreign_keys = ON');
+  }
+
   Future _createDB(Database db, int version) async {
-    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    const textType = 'TEXT NOT NULL';
-    const textNullable = 'TEXT';
+    await db.execute('''
+      CREATE TABLE recipes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        short_description TEXT,
+        category TEXT NOT NULL,
+        ingredients TEXT,
+        instructions TEXT,
+        cover_image TEXT,
+        prep_time INTEGER,
+        cook_time INTEGER,
+        servings INTEGER,
+        difficulty TEXT,
+        tags TEXT,
+        is_favorite INTEGER DEFAULT 0,
+        rating_score REAL,
+        review_count INTEGER DEFAULT 0,
+        calories INTEGER,
+        protein TEXT,
+        fat TEXT,
+        carbs TEXT,
+        is_daily_special INTEGER DEFAULT 0,
+        view_count INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT
+      )
+    ''');
 
     await db.execute('''
-    CREATE TABLE recipes (
-      id $idType,
-      title $textType,
-      category $textType,
-      ingredients $textType,
-      instructions $textType,
-      image_name $textNullable,
-      created_at $textType
-    )
+      CREATE TABLE recipe_steps (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recipe_id INTEGER,
+        step_number INTEGER,
+        instruction_text TEXT NOT NULL,
+        FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE recipe_gallery (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recipe_id INTEGER,
+        image_path TEXT NOT NULL,
+        FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE sponsor_equipments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recipe_id INTEGER,
+        equipment_name TEXT NOT NULL,
+        equipment_image TEXT,
+        purpose_description TEXT,
+        affiliate_url TEXT NOT NULL,
+        FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE
+      )
     ''');
   }
 
@@ -101,16 +148,16 @@ class DatabaseHelper {
   Future<String> saveImageLocally(File sourceFile) async {
     final docDirPath = await getApplicationDocumentsDirectory();
     final imageFolder = Directory(join(docDirPath.path, 'YemekKitabiApp', 'Images'));
-    
+
     if (!await imageFolder.exists()) {
       await imageFolder.create(recursive: true);
     }
 
     final fileName = basename(sourceFile.path);
     final destinationPath = join(imageFolder.path, fileName);
-    
+
     await sourceFile.copy(destinationPath);
-    return fileName; 
+    return fileName;
   }
 
   Future<void> close() async {

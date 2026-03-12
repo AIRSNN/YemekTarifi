@@ -42,11 +42,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       ),
     );
 
-    if (confirm == true && mounted) {
+    if (confirm == true) {
       await DatabaseHelper.instance.deleteRecipe(_currentRecipe.id!);
-      if (mounted) {
-        Navigator.pop(context, true);
-      }
+      if (mounted) Navigator.pop(context, true);
     }
   }
 
@@ -54,119 +52,119 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentRecipe.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(_currentRecipe.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            tooltip: 'Düzenle',
             onPressed: () async {
-              final updatedRecipe = await Navigator.push(
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => EditRecipeScreen(recipe: _currentRecipe),
                 ),
               );
-
-              if (updatedRecipe != null && updatedRecipe is Recipe) {
-                setState(() {
-                  _currentRecipe = updatedRecipe;
-                });
+              if (result != null && result is Recipe) {
+                setState(() => _currentRecipe = result);
               }
             },
           ),
           IconButton(
             icon: const Icon(Icons.delete),
-            tooltip: 'Sil',
             onPressed: _confirmDelete,
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (_currentRecipe.imageName != null && _currentRecipe.imageName!.isNotEmpty)
-              FutureBuilder<String>(
-                future: DatabaseHelper.instance.getImagePath(_currentRecipe.imageName!),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const SizedBox(
-                      height: 250,
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  } else if (snapshot.hasError || !snapshot.hasData) {
-                    return _buildNoImagePlaceholder();
-                  }
-                  
-                  if (DatabaseHelper.isLocalMode) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        File(snapshot.data!),
-                        width: double.infinity,
-                        height: 250,
-                        fit: BoxFit.cover,
-                      ),
-                    );
-                  } else {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        snapshot.data!,
-                        width: double.infinity,
-                        height: 250,
-                        fit: BoxFit.cover,
-                      ),
-                    );
-                  }
-                },
-              )
-            else
-              _buildNoImagePlaceholder(),
-
-            const SizedBox(height: 16),
-            
-            // --- KATEGORİ ROZETİ ---
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.deepOrange,
-                borderRadius: BorderRadius.circular(16),
+            FutureBuilder<String>(
+              future: DatabaseHelper.instance.getImagePath(_currentRecipe.coverImage ?? ''),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && _currentRecipe.coverImage != null) {
+                  return Image.file(
+                    File(snapshot.data!),
+                    width: double.infinity,
+                    height: 300,
+                    fit: BoxFit.cover,
+                  );
+                }
+                return _buildNoImagePlaceholder();
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _currentRecipe.title,
+                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    _currentRecipe.category,
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600], fontStyle: FontStyle.italic),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildInfoItem(Icons.timer, "${_currentRecipe.prepTime ?? '-'} dk", "Hazırlık"),
+                      _buildInfoItem(Icons.speed, _currentRecipe.difficulty ?? "Orta", "Zorluk"),
+                      _buildInfoItem(Icons.restaurant, "${_currentRecipe.servings ?? '-'} Kişi", "Porsiyon"),
+                      _buildInfoItem(Icons.local_fire_department, "${_currentRecipe.calories ?? '-'} kcal", "Enerji"),
+                    ],
+                  ),
+                  const Divider(height: 40, thickness: 1),
+                  if (_currentRecipe.shortDescription != null && _currentRecipe.shortDescription!.isNotEmpty) ...[
+                    Text(
+                      _currentRecipe.shortDescription!,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.blueGrey),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                  const Row(
+                    children: [
+                      Icon(Icons.shopping_basket, color: Colors.deepOrange),
+                      SizedBox(width: 8),
+                      Text('Malzemeler', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    _currentRecipe.ingredients ?? "Malzeme belirtilmedi.",
+                    style: const TextStyle(fontSize: 16, height: 1.5),
+                  ),
+                  const SizedBox(height: 30),
+                  const Row(
+                    children: [
+                      Icon(Icons.menu_book, color: Colors.deepOrange),
+                      SizedBox(width: 8),
+                      Text('Hazırlanışı', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    _currentRecipe.instructions ?? "Hazırlanış bilgisi belirtilmedi.",
+                    style: const TextStyle(fontSize: 16, height: 1.6),
+                  ),
+                ],
               ),
-              child: Text(
-                _currentRecipe.category,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-              ),
             ),
-            
-            const SizedBox(height: 24),
-            const Row(
-              children: [
-                Icon(Icons.shopping_basket, color: Colors.deepOrange),
-                SizedBox(width: 8),
-                Text('Malzemeler', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepOrange)),
-              ],
-            ),
-            const Divider(thickness: 2),
-            const SizedBox(height: 8),
-            Text(_currentRecipe.ingredients, style: const TextStyle(fontSize: 16, height: 1.6)),
-            const SizedBox(height: 32),
-            
-            const Row(
-              children: [
-                Icon(Icons.soup_kitchen, color: Colors.deepOrange),
-                SizedBox(width: 8),
-                Text('Hazırlanışı', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepOrange)),
-              ],
-            ),
-            const Divider(thickness: 2),
-            const SizedBox(height: 8),
-            Text(_currentRecipe.instructions, style: const TextStyle(fontSize: 16, height: 1.6)),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoItem(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.deepOrange),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
     );
   }
 
@@ -174,21 +172,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return Container(
       width: double.infinity,
       height: 250,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.image_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 8),
-            Text('Resim Yok', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      ),
+      color: Colors.grey[200],
+      child: const Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
     );
   }
 }
