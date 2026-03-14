@@ -115,3 +115,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 11 (Detay Ekranı Master UI Dönüşümü)
 - `recipe_detail_screen.dart` sayfası güncellendi. Uzun kaydırma listesi yerine Master UI standartlarında Sekmeli (Tab) yapıya geçildi. Zorluk derecesi için kesik ilerleme çubukları (Segmented Bar) entegre edildi. Tasarım dergi kapağı (Tasarım 32) yerleşimine yaklaştırıldı.
+
+## Faz: Master UI Entegrasyonu - Adım 12 (Ekleme Formu Dönüşümü)
+- `add_recipe_screen.dart` sayfasındaki form elemanları Master UI v20 tasarımına uyarlandı. Etiketler (Labels) input kutularının dışına, üstüne, BÜYÜK HARF ve kalın olacak şekilde taşındı. Endüstriyel panel görünümü pekiştirildi.
