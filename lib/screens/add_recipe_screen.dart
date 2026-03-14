@@ -1,225 +1,289 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:google_fonts/google_fonts.dart';
+// import 'package:image_picker/image_picker.dart'; // Eğer projede yüklüyse aktif et, resim seçmek için.
 import '../models/recipe_model.dart';
 import '../database/database_helper.dart';
+import '../widgets/master_layout.dart'; // YENİ EKLENDİ: Ortak Kapsayıcı
 
 class AddRecipeScreen extends StatefulWidget {
-  const AddRecipeScreen({super.key});
+  const AddRecipeScreen({Key? key}) : super(key: key);
 
   @override
-  State<AddRecipeScreen> createState() => _AddRecipeScreenState();
+  _AddRecipeScreenState createState() => _AddRecipeScreenState();
 }
 
 class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Temel Metin Kontrolcüleri
-  final _titleController = TextEditingController();
-  final _shortDescController = TextEditingController(); 
-  final _ingredientsController = TextEditingController();
-  final _instructionsController = TextEditingController(); // EKLENDİ: Hazırlanış Kontrolcüsü
-  
-  // Operasyonel Veri Kontrolcüleri (Sayısal)
-  final _prepTimeController = TextEditingController(); 
-  final _cookTimeController = TextEditingController(); 
-  final _servingsController = TextEditingController(); 
-  final _caloriesController = TextEditingController(); 
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
-  // Kategori ve Zorluk Seçicileri
-  String? _selectedCategory;
+  // Form Kontrolcüleri
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _shortDescController = TextEditingController();
+  final TextEditingController _prepTimeController = TextEditingController();
+  final TextEditingController _cookTimeController = TextEditingController();
+  final TextEditingController _servingsController = TextEditingController();
+  final TextEditingController _caloriesController = TextEditingController();
+  final TextEditingController _ingredientsController = TextEditingController();
+  final TextEditingController _instructionsController = TextEditingController();
+
+  String _selectedCategory = 'Ana Yemek';
+  String _selectedDifficulty = 'Orta';
+  String? _imagePath; // İleride resim seçildiğinde dosya yolunu tutacak
+
   final List<String> _categories = [
     'Çorba', 'Ana Yemek', 'Sebze Yemeği', 'Et Yemeği', 
-    'Baklagil', 'Dolma-Sarma', 'Hamur İşi', 'Pilav', 
-    'Meze', 'Salata', 'Kahvaltılık', 'Tatlı'
+    'Baklagil', 'Dolma-Sarma', 'Hamur İşi', 'Pilav', 'Meze', 
+    'Salata', 'Kahvaltılık', 'Tatlı'
   ];
 
-  String? _selectedDifficulty; 
-  final List<String> _difficulties = ['Kolay', 'Orta', 'Zor', 'Şef Seviyesi'];
+  final List<String> _difficulties = ['Kolay', 'Orta', 'Zor'];
 
-  File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
+  // YENİ EKLENDİ: Form elemanları için ortak tasarım şablonu (Master UI)
+  InputDecoration _buildInputDecoration(String hint, IconData icon, Color surfaceColor, Color borderColor, Color primaryColor, Color textMuted) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: GoogleFonts.nunito(color: textMuted, fontWeight: FontWeight.w600),
+      prefixIcon: Icon(icon, color: textMuted),
+      filled: true,
+      fillColor: surfaceColor,
+      contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide(color: borderColor, width: 1.0),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide(color: primaryColor, width: 2.0),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: const BorderSide(color: Colors.red, width: 1.0),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: const BorderSide(color: Colors.red, width: 2.0),
+      ),
+    );
   }
 
-  Future<void> _saveRecipe() async {
+  void _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
-      String? savedImageName;
-      
-      if (_selectedImage != null) {
-        savedImageName = await DatabaseHelper.instance.saveImageLocally(_selectedImage!);
-      }
-
-      int? tryParseInt(String text) {
-        if (text.trim().isEmpty) return null;
-        return int.tryParse(text.trim());
-      }
-
       final newRecipe = Recipe(
-        title: _titleController.text.trim(),
-        shortDescription: _shortDescController.text.trim(), 
-        category: _selectedCategory!, 
-        ingredients: _ingredientsController.text.trim(),
-        instructions: _instructionsController.text.trim(), // EKLENDİ: Hazırlanış metnini modele gönderiyoruz
-        coverImage: savedImageName, 
-        difficulty: _selectedDifficulty, 
-        prepTime: tryParseInt(_prepTimeController.text), 
-        cookTime: tryParseInt(_cookTimeController.text), 
-        servings: tryParseInt(_servingsController.text), 
-        calories: tryParseInt(_caloriesController.text), 
+        title: _titleController.text,
+        shortDescription: _shortDescController.text,
+        category: _selectedCategory,
+        ingredients: _ingredientsController.text,
+        instructions: _instructionsController.text,
+        difficulty: _selectedDifficulty,
+        prepTime: int.tryParse(_prepTimeController.text) ?? 0,
+        cookTime: int.tryParse(_cookTimeController.text) ?? 0,
+        servings: int.tryParse(_servingsController.text) ?? 0,
+        calories: int.tryParse(_caloriesController.text) ?? 0,
+        coverImage: _imagePath, 
         createdAt: DateTime.now().toIso8601String(),
       );
 
-      await DatabaseHelper.instance.createRecipe(newRecipe);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tarif başarıyla kaydedildi!')),
-        );
-        Navigator.pop(context, true); 
-      }
+      await _dbHelper.createRecipe(newRecipe);
+      Navigator.pop(context); // Kaydettikten sonra geri dön
     }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _shortDescController.dispose();
-    _ingredientsController.dispose();
-    _instructionsController.dispose(); // EKLENDİ
-    _prepTimeController.dispose();
-    _cookTimeController.dispose();
-    _servingsController.dispose();
-    _caloriesController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Yeni Tarif Ekle'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              // --- VİTRİN GÖRSELİ ---
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade400),
-                  ),
-                  child: _selectedImage != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.file(_selectedImage!, fit: BoxFit.cover, width: double.infinity),
-                        )
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
-                            SizedBox(height: 8),
-                            Text('Vitrin Resmi Ekle', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                          ],
+    // YENİ EKLENDİ: Tema uyumu
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppTheme.isDark,
+      builder: (context, isDark, _) {
+        final Color surfaceColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
+        final Color textDark = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+        final Color textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+        final Color primaryColor = const Color(0xFFE07A5F);
+        final Color borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+
+        // YENİ EKLENDİ: Ekran MasterLayout içine alındı
+        return MasterLayout(
+          title: 'Yeni Tarif Ekle',
+          activeMenu: 'Yemek Tarifleri',
+          onBack: () => Navigator.pop(context),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(32.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Resim Ekleme Alanı
+                  GestureDetector(
+                    onTap: () {
+                      // İleride ImagePicker fonksiyonu buraya bağlanacak
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(16.0),
+                        border: Border.all(
+                          color: borderColor,
+                          width: 2,
                         ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Yemek Adı', border: OutlineInputBorder(), prefixIcon: Icon(Icons.restaurant)),
-                validator: (value) => value == null || value.isEmpty ? 'Lütfen yemek adını girin' : null,
-              ),
-              const SizedBox(height: 16),
-              
-              TextFormField(
-                controller: _shortDescController,
-                decoration: const InputDecoration(labelText: 'Kısa Açıklama (İsteğe Bağlı)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.subtitles)),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'Kategori', border: OutlineInputBorder(), prefixIcon: Icon(Icons.category)),
-                      value: _selectedCategory,
-                      items: _categories.map((String category) => DropdownMenuItem(value: category, child: Text(category))).toList(),
-                      onChanged: (newValue) => setState(() => _selectedCategory = newValue),
-                      validator: (value) => value == null ? 'Seçiniz' : null,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_a_photo, size: 48, color: textMuted),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Vitrin Resmi Ekle',
+                            style: GoogleFonts.nunito(
+                              color: textMuted,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'Zorluk', border: OutlineInputBorder(), prefixIcon: Icon(Icons.speed)),
-                      value: _selectedDifficulty,
-                      items: _difficulties.map((String diff) => DropdownMenuItem(value: diff, child: Text(diff))).toList(),
-                      onChanged: (newValue) => setState(() => _selectedDifficulty = newValue),
+                  
+                  const SizedBox(height: 24),
+
+                  // 2. Temel Bilgiler
+                  TextFormField(
+                    controller: _titleController,
+                    style: TextStyle(color: textDark),
+                    decoration: _buildInputDecoration('Yemek Adı', Icons.restaurant_menu, surfaceColor, borderColor, primaryColor, textMuted),
+                    validator: (value) => value == null || value.isEmpty ? 'Yemek adı zorunludur' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  TextFormField(
+                    controller: _shortDescController,
+                    style: TextStyle(color: textDark),
+                    decoration: _buildInputDecoration('Kısa Açıklama (İsteğe Bağlı)', Icons.short_text, surfaceColor, borderColor, primaryColor, textMuted),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 3. Kategori ve Zorluk (Yanyana)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedCategory,
+                          dropdownColor: surfaceColor,
+                          style: TextStyle(color: textDark),
+                          decoration: _buildInputDecoration('Kategori', Icons.category, surfaceColor, borderColor, primaryColor, textMuted),
+                          items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat, style: GoogleFonts.nunito()))).toList(),
+                          onChanged: (val) => setState(() => _selectedCategory = val!),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedDifficulty,
+                          dropdownColor: surfaceColor,
+                          style: TextStyle(color: textDark),
+                          decoration: _buildInputDecoration('Zorluk', Icons.speed, surfaceColor, borderColor, primaryColor, textMuted),
+                          items: _difficulties.map((diff) => DropdownMenuItem(value: diff, child: Text(diff, style: GoogleFonts.nunito()))).toList(),
+                          onChanged: (val) => setState(() => _selectedDifficulty = val!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 4. Süreler ve Porsiyon (Yanyana)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _prepTimeController,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(color: textDark),
+                          decoration: _buildInputDecoration('Hazırlık (Dk)', Icons.timer_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _cookTimeController,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(color: textDark),
+                          decoration: _buildInputDecoration('Pişirme (Dk)', Icons.local_fire_department_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _servingsController,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(color: textDark),
+                          decoration: _buildInputDecoration('Porsiyon', Icons.people_outline, surfaceColor, borderColor, primaryColor, textMuted),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 5. Kalori
+                  TextFormField(
+                    controller: _caloriesController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: textDark),
+                    decoration: _buildInputDecoration('Kalori (Kcal) - İsteğe Bağlı', Icons.monitor_weight_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 6. Çok Satırlı Alanlar (Malzemeler ve Hazırlanışı)
+                  TextFormField(
+                    controller: _ingredientsController,
+                    maxLines: 5,
+                    style: TextStyle(color: textDark),
+                    decoration: _buildInputDecoration('Malzemeler', Icons.shopping_basket_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _instructionsController,
+                    maxLines: 7,
+                    style: TextStyle(color: textDark),
+                    decoration: _buildInputDecoration('Hazırlanışı', Icons.menu_book, surfaceColor, borderColor, primaryColor, textMuted),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // 7. Kaydet Butonu (Master UI Solid State)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveRecipe,
+                      icon: const Icon(Icons.save, color: Colors.white),
+                      label: Text(
+                        'Tarifi Kaydet',
+                        style: GoogleFonts.nunito(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor, // Kiremit Rengi
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                      ),
                     ),
                   ),
+                  
+                  const SizedBox(height: 40),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  Expanded(child: TextFormField(controller: _prepTimeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Hazırlık (Dk)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.timer_outlined)))),
-                  const SizedBox(width: 8),
-                  Expanded(child: TextFormField(controller: _cookTimeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Pişirme (Dk)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.local_fire_department)))),
-                  const SizedBox(width: 8),
-                  Expanded(child: TextFormField(controller: _servingsController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Porsiyon', border: OutlineInputBorder(), prefixIcon: Icon(Icons.people)))),
-                ],
-              ),
-              const SizedBox(height: 16),
-              
-              TextFormField(controller: _caloriesController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Kalori (Kcal) - İsteğe Bağlı', border: OutlineInputBorder(), prefixIcon: Icon(Icons.monitor_weight))),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _ingredientsController,
-                decoration: const InputDecoration(labelText: 'Malzemeler', border: OutlineInputBorder(), prefixIcon: Icon(Icons.format_list_bulleted)),
-                maxLines: 4,
-                validator: (value) => value == null || value.isEmpty ? 'Lütfen malzemeleri girin' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // EKLENDİ: Hazırlanışı Metin Kutusu
-              TextFormField(
-                controller: _instructionsController,
-                decoration: const InputDecoration(labelText: 'Hazırlanışı', border: OutlineInputBorder(), prefixIcon: Icon(Icons.menu_book)),
-                maxLines: 6,
-                validator: (value) => value == null || value.isEmpty ? 'Lütfen hazırlanış adımlarını girin' : null,
-              ),
-              const SizedBox(height: 24),
-
-              ElevatedButton.icon(
-                onPressed: _saveRecipe,
-                icon: const Icon(Icons.save),
-                label: const Text('Tarifi Kaydet'),
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
