@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart'; // YENİ EKLENDİ
+import 'package:image_picker/image_picker.dart'; 
 import '../models/recipe_model.dart';
 import '../database/database_helper.dart';
 import '../widgets/master_layout.dart';
@@ -29,7 +29,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   String _selectedCategory = 'Ana Yemek';
   String _selectedDifficulty = 'Orta';
   
-  // YENİ EKLENDİ: Seçilen resim dosyasını ekranda göstermek için
   File? _selectedImageFile; 
 
   final List<String> _categories = [
@@ -40,11 +39,33 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   final List<String> _difficulties = ['Kolay', 'Orta', 'Zor'];
 
-  InputDecoration _buildInputDecoration(String hint, IconData icon, Color surfaceColor, Color borderColor, Color primaryColor, Color textMuted) {
+  // YENİ EKLENDİ: Master UI Standart Form Etiketi (Kutunun dışında ve üstünde)
+  Widget _buildLabeledField(String label, Widget field, Color textMuted) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+          child: Text(
+            label.toUpperCase(),
+            style: GoogleFonts.nunito(
+              fontSize: 12, 
+              fontWeight: FontWeight.w800, 
+              color: textMuted, 
+              letterSpacing: 0.5
+            ),
+          ),
+        ),
+        field,
+        const SizedBox(height: 24), // Her alan arasına standart boşluk
+      ],
+    );
+  }
+
+  // GÜNCELLENDİ: Sadece kutunun iç tasarımı (Label artık dışarıda)
+  InputDecoration _buildInputDecoration(IconData icon, Color surfaceColor, Color borderColor, Color primaryColor, Color textMuted) {
     return InputDecoration(
-      hintText: hint,
-      hintStyle: GoogleFonts.nunito(color: textMuted, fontWeight: FontWeight.w600),
-      prefixIcon: Icon(icon, color: textMuted),
+      prefixIcon: Icon(icon, color: textMuted, size: 20),
       filled: true,
       fillColor: surfaceColor,
       contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
@@ -67,7 +88,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
-  // YENİ EKLENDİ: Galeriden resim seçme fonksiyonu
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -83,7 +103,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     if (_formKey.currentState!.validate()) {
       
       String? finalImageName;
-      // YENİ EKLENDİ: Eğer resim seçildiyse DatabaseHelper ile locale kopyala ve sadece dosya adını al
       if (_selectedImageFile != null) {
         finalImageName = await _dbHelper.saveImageLocally(_selectedImageFile!);
       }
@@ -99,7 +118,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         cookTime: int.tryParse(_cookTimeController.text) ?? 0,
         servings: int.tryParse(_servingsController.text) ?? 0,
         calories: int.tryParse(_caloriesController.text) ?? 0,
-        coverImage: finalImageName, // Kopyalanan yeni resmin adı
+        coverImage: finalImageName, 
         createdAt: DateTime.now().toIso8601String(),
       );
 
@@ -130,149 +149,187 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Resim Ekleme Alanı (GÜNCELLENDİ)
-                  GestureDetector(
-                    onTap: _pickImage, // Tıklayınca dosya seçici açılır
-                    child: Container(
-                      width: double.infinity,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(16.0),
-                        border: Border.all(
-                          color: _selectedImageFile != null ? primaryColor : borderColor,
-                          width: 2,
+                  
+                  // 1. Resim Ekleme Alanı
+                  _buildLabeledField(
+                    'Vitrin Resmi', 
+                    GestureDetector(
+                      onTap: _pickImage, 
+                      child: Container(
+                        width: double.infinity,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(16.0),
+                          border: Border.all(
+                            color: _selectedImageFile != null ? primaryColor : borderColor,
+                            width: _selectedImageFile != null ? 2 : 1,
+                          ),
                         ),
-                      ),
-                      child: _selectedImageFile != null
-                          // Resim seçildiyse resmi göster
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(14.0),
-                              child: Image.file(
-                                _selectedImageFile!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                              ),
-                            )
-                          // Resim yoksa standart ikon göster
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_a_photo, size: 48, color: textMuted),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Vitrin Resmi Seç',
-                                  style: GoogleFonts.nunito(
-                                    color: textMuted,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                        child: _selectedImageFile != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(14.0),
+                                child: Image.file(
+                                  _selectedImageFile!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
                                 ),
-                              ],
-                            ),
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_a_photo, size: 48, color: textMuted.withOpacity(0.5)),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Bilgisayardan Seç',
+                                    style: GoogleFonts.nunito(color: textMuted, fontSize: 16, fontWeight: FontWeight.w700),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ), 
+                    textMuted
+                  ),
+
+                  // 2. Başlık ve Kısa Açıklama
+                  _buildLabeledField(
+                    'Yemek Adı', 
+                    TextFormField(
+                      controller: _titleController,
+                      style: TextStyle(color: textDark),
+                      decoration: _buildInputDecoration(Icons.restaurant_menu, surfaceColor, borderColor, primaryColor, textMuted),
+                      validator: (value) => value == null || value.isEmpty ? 'Yemek adı zorunludur' : null,
+                    ), 
+                    textMuted
+                  ),
+                  
+                  _buildLabeledField(
+                    'Kısa Açıklama (İsteğe Bağlı)', 
+                    TextFormField(
+                      controller: _shortDescController,
+                      style: TextStyle(color: textDark),
+                      decoration: _buildInputDecoration(Icons.short_text, surfaceColor, borderColor, primaryColor, textMuted),
+                    ), 
+                    textMuted
+                  ),
+
+                  // 3. Kategori ve Zorluk
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildLabeledField(
+                          'Kategori Seçimi',
+                          DropdownButtonFormField<String>(
+                            value: _selectedCategory,
+                            dropdownColor: surfaceColor,
+                            style: TextStyle(color: textDark),
+                            decoration: _buildInputDecoration(Icons.category, surfaceColor, borderColor, primaryColor, textMuted),
+                            items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat, style: GoogleFonts.nunito()))).toList(),
+                            onChanged: (val) => setState(() => _selectedCategory = val!),
+                          ),
+                          textMuted
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildLabeledField(
+                          'Zorluk Derecesi',
+                          DropdownButtonFormField<String>(
+                            value: _selectedDifficulty,
+                            dropdownColor: surfaceColor,
+                            style: TextStyle(color: textDark),
+                            decoration: _buildInputDecoration(Icons.speed, surfaceColor, borderColor, primaryColor, textMuted),
+                            items: _difficulties.map((diff) => DropdownMenuItem(value: diff, child: Text(diff, style: GoogleFonts.nunito()))).toList(),
+                            onChanged: (val) => setState(() => _selectedDifficulty = val!),
+                          ),
+                          textMuted
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // 4. Süreler ve Porsiyon
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildLabeledField(
+                          'Hazırlık (Dk)',
+                          TextFormField(
+                            controller: _prepTimeController,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(color: textDark),
+                            decoration: _buildInputDecoration(Icons.timer_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                          ),
+                          textMuted
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildLabeledField(
+                          'Pişirme (Dk)',
+                          TextFormField(
+                            controller: _cookTimeController,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(color: textDark),
+                            decoration: _buildInputDecoration(Icons.local_fire_department_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                          ),
+                          textMuted
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildLabeledField(
+                          'Porsiyon (Kişi)',
+                          TextFormField(
+                            controller: _servingsController,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(color: textDark),
+                            decoration: _buildInputDecoration(Icons.people_outline, surfaceColor, borderColor, primaryColor, textMuted),
+                          ),
+                          textMuted
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // 5. Kalori
+                  _buildLabeledField(
+                    'Enerji (Kcal)',
+                    TextFormField(
+                      controller: _caloriesController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: textDark),
+                      decoration: _buildInputDecoration(Icons.monitor_weight_outlined, surfaceColor, borderColor, primaryColor, textMuted),
                     ),
+                    textMuted
+                  ),
+
+                  // 6. Geniş Alanlar
+                  _buildLabeledField(
+                    'Malzemeler',
+                    TextFormField(
+                      controller: _ingredientsController,
+                      maxLines: 5,
+                      style: TextStyle(color: textDark),
+                      decoration: _buildInputDecoration(Icons.shopping_basket_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                    ),
+                    textMuted
+                  ),
+
+                  _buildLabeledField(
+                    'Hazırlanışı',
+                    TextFormField(
+                      controller: _instructionsController,
+                      maxLines: 7,
+                      style: TextStyle(color: textDark),
+                      decoration: _buildInputDecoration(Icons.menu_book, surfaceColor, borderColor, primaryColor, textMuted),
+                    ),
+                    textMuted
                   ),
                   
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
 
-                  TextFormField(
-                    controller: _titleController,
-                    style: TextStyle(color: textDark),
-                    decoration: _buildInputDecoration('Yemek Adı', Icons.restaurant_menu, surfaceColor, borderColor, primaryColor, textMuted),
-                    validator: (value) => value == null || value.isEmpty ? 'Yemek adı zorunludur' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  TextFormField(
-                    controller: _shortDescController,
-                    style: TextStyle(color: textDark),
-                    decoration: _buildInputDecoration('Kısa Açıklama (İsteğe Bağlı)', Icons.short_text, surfaceColor, borderColor, primaryColor, textMuted),
-                  ),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedCategory,
-                          dropdownColor: surfaceColor,
-                          style: TextStyle(color: textDark),
-                          decoration: _buildInputDecoration('Kategori', Icons.category, surfaceColor, borderColor, primaryColor, textMuted),
-                          items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat, style: GoogleFonts.nunito()))).toList(),
-                          onChanged: (val) => setState(() => _selectedCategory = val!),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedDifficulty,
-                          dropdownColor: surfaceColor,
-                          style: TextStyle(color: textDark),
-                          decoration: _buildInputDecoration('Zorluk', Icons.speed, surfaceColor, borderColor, primaryColor, textMuted),
-                          items: _difficulties.map((diff) => DropdownMenuItem(value: diff, child: Text(diff, style: GoogleFonts.nunito()))).toList(),
-                          onChanged: (val) => setState(() => _selectedDifficulty = val!),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _prepTimeController,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(color: textDark),
-                          decoration: _buildInputDecoration('Hazırlık (Dk)', Icons.timer_outlined, surfaceColor, borderColor, primaryColor, textMuted),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _cookTimeController,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(color: textDark),
-                          decoration: _buildInputDecoration('Pişirme (Dk)', Icons.local_fire_department_outlined, surfaceColor, borderColor, primaryColor, textMuted),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _servingsController,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(color: textDark),
-                          decoration: _buildInputDecoration('Porsiyon', Icons.people_outline, surfaceColor, borderColor, primaryColor, textMuted),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _caloriesController,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: textDark),
-                    decoration: _buildInputDecoration('Kalori (Kcal) - İsteğe Bağlı', Icons.monitor_weight_outlined, surfaceColor, borderColor, primaryColor, textMuted),
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _ingredientsController,
-                    maxLines: 5,
-                    style: TextStyle(color: textDark),
-                    decoration: _buildInputDecoration('Malzemeler', Icons.shopping_basket_outlined, surfaceColor, borderColor, primaryColor, textMuted),
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _instructionsController,
-                    maxLines: 7,
-                    style: TextStyle(color: textDark),
-                    decoration: _buildInputDecoration('Hazırlanışı', Icons.menu_book, surfaceColor, borderColor, primaryColor, textMuted),
-                  ),
-                  const SizedBox(height: 32),
-
+                  // 7. Kaydet Butonu
                   SizedBox(
                     width: double.infinity,
                     height: 56,

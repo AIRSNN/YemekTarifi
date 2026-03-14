@@ -118,3 +118,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 12 (Ekleme Formu Dönüşümü)
 - `add_recipe_screen.dart` sayfasındaki form elemanları Master UI v20 tasarımına uyarlandı. Etiketler (Labels) input kutularının dışına, üstüne, BÜYÜK HARF ve kalın olacak şekilde taşındı. Endüstriyel panel görünümü pekiştirildi.
+
+## Faz: Master UI Entegrasyonu - Adım 13 (Dergi Tarzı Detay Ekranı)
+- `recipe_detail_screen.dart` sayfası, Tasarım 41 referans alınarak editorial bir düzene geçirildi. Üstte geniş kapak görseli, yatay özet rozetleri, hikaye alanı, iki kolonlu malzeme/besin değeri (alerji uyarıları eklendi) yapısı ve `01`, `02` formatında özel adım kartları (hazırlanış) inşa edildi. Eksik veritabanı alanları için şimdilik mock (örnek) veriler kullanıldı.
