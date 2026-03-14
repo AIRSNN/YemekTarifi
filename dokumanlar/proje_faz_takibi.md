@@ -88,3 +88,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 3
 - Uygulama mobil görünümden masaüstü panel görünümüne (Sidebar, Topbar ve Ana İçerik) geçirildi. Sol menüye navigasyon eklendi. Üst menüye çalışan Gündüz/Gece modu ve Çıkış (Exit) butonları eklendi. Orta alana tarif listesi yerleştirildi.
+
+## Faz: Master UI Entegrasyonu - Adım 4 (Hata Giderme)
+- `home_screen.dart` dosyasındaki `Container` border syntax hatası (`BoxDecoration` eksikliği) giderildi. Ayrıca `recipe_card.dart` widget'ına `isDarkMode` parametresi eklenerek karanlık mod uyumluluğu sağlandı.

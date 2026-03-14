@@ -1,21 +1,13 @@
+import 'dart:io'; // YENİ EKLENDİ: Uygulamadan çıkış (exit) yapabilmek için eklendi.
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; 
+import 'package:google_fonts/google_fonts.dart';
 import '../models/recipe_model.dart';
 import '../database/database_helper.dart';
-import '../widgets/recipe_card.dart'; 
+import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
 import 'add_recipe_screen.dart';
 
-const Color kBackgroundColor = Color(0xFFF8FAFC); 
-const Color kSurfaceColor = Color(0xFFFFFFFF); 
-const Color kPrimaryColor = Color(0xFFE07A5F); 
-const Color kPrimaryLight = Color(0xFFFEE8E1); 
-const Color kBorderColor = Color(0xFFE2E8F0); 
-const Color kTextDark = Color(0xFF1E293B); 
-const Color kTextMuted = Color(0xFF64748B); 
-
 class HomeScreen extends StatefulWidget {
-  // YENİ EKLENDİ: main.dart'taki "const HomeScreen()" hatasını gidermek için eklendi.
   const HomeScreen({super.key});
 
   @override
@@ -23,27 +15,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // DEĞİŞTİRİLDİ: Singleton yapısına uygun olarak "DatabaseHelper.instance" kullanıldı.
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   List<Recipe> _recipes = [];
   List<Recipe> _filteredRecipes = [];
   TextEditingController _searchController = TextEditingController();
+  
+  // YENİ EKLENDİ: Sol menü ve tema yönetimi için durum değişkenleri
   String _selectedCategory = 'Tümü';
+  String _selectedMenuItem = 'Yemek Tarifleri'; // Sol menüdeki aktif sekme
+  bool _isDarkMode = false; // Gündüz/Gece modu kontrolü
 
   final List<String> _categories = [
-    'Tümü',
-    'Çorba',
-    'Ana Yemek',
-    'Sebze Yemeği',
-    'Et Yemeği',
-    'Baklagil',
-    'Dolma-Sarma',
-    'Hamur İşi',
-    'Pilav',
-    'Meze',
-    'Salata',
-    'Kahvaltılık',
-    'Tatlı',
+    'Tümü', 'Çorba', 'Ana Yemek', 'Sebze Yemeği', 'Et Yemeği', 
+    'Baklagil', 'Dolma-Sarma', 'Hamur İşi', 'Pilav', 'Meze', 
+    'Salata', 'Kahvaltılık', 'Tatlı',
   ];
 
   @override
@@ -54,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _refreshRecipes() async {
-    // DEĞİŞTİRİLDİ: "getRecipes" yerine database_helper.dart içindeki gerçek metot "readAllRecipes" kullanıldı.
     final data = await _dbHelper.readAllRecipes();
     setState(() {
       _recipes = data;
@@ -65,7 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void _filterRecipes() {
     setState(() {
       _filteredRecipes = _recipes.where((recipe) {
-        // DEĞİŞTİRİLDİ: "recipe.name" yerine modeldeki gerçek değer "recipe.title" kullanıldı.
         final matchesSearch = recipe.title.toLowerCase().contains(_searchController.text.toLowerCase());
         final matchesCategory = _selectedCategory == 'Tümü' || recipe.category == _selectedCategory;
         return matchesSearch && matchesCategory;
@@ -73,171 +56,341 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: kSurfaceColor,
-        elevation: 0, 
-        centerTitle: true,
-        title: Text(
-          'Yemek Kitabım v3',
-          style: GoogleFonts.nunito(
-            color: kTextDark,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-          ),
+  // YENİ EKLENDİ: Sol Menü (Sidebar) elemanı oluşturucu fonksiyon
+  Widget _buildMenuItem(String title, IconData icon) {
+    bool isActive = _selectedMenuItem == title;
+    // Renkler temaya göre ayarlanıyor
+    Color primaryColor = const Color(0xFFE07A5F);
+    Color textColor = isActive ? primaryColor : (_isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B));
+    Color bgColor = isActive 
+        ? (_isDarkMode ? primaryColor.withOpacity(0.2) : primaryColor.withOpacity(0.1)) 
+        : Colors.transparent;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedMenuItem = title;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: kBorderColor, height: 1.0), 
+        child: Row(
+          children: [
+            Icon(icon, color: textColor, size: 22),
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: GoogleFonts.nunito(
+                color: textColor,
+                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+          ],
         ),
       ),
-      body: Column(
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // DEĞİŞTİRİLDİ: Gündüz/Gece moduna göre dinamik renk paleti tanımlandı
+    final Color bgColor = _isDarkMode ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+    final Color surfaceColor = _isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
+    final Color borderColor = _isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final Color textDark = _isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+    final Color textMuted = _isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final Color primaryColor = const Color(0xFFE07A5F);
+
+    return Scaffold(
+      backgroundColor: bgColor,
+      // DEĞİŞTİRİLDİ: Tüm ekran yatay bir Row (Satır) içine alındı
+      body: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Tariflerde ara...',
-                hintStyle: GoogleFonts.nunito(color: kTextMuted, fontWeight: FontWeight.w600),
-                prefixIcon: const Icon(Icons.search, color: kTextMuted),
-                filled: true,
-                fillColor: kSurfaceColor,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0), 
-                  borderSide: const BorderSide(color: kBorderColor, width: 1.0),
+          // ==========================================
+          // 1. BÖLÜM: SOL MENÜ (SIDEBAR)
+          // ==========================================
+          Container(
+            width: 260, // Sol menü genişliği
+            decoration: BoxDecoration(
+              color: surfaceColor,
+              border: Border(right: BorderSide(color: borderColor, width: 1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Logo / Başlık Alanı
+                Container(
+                  height: 80,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  alignment: Alignment.centerLeft,
+                  border: Border(bottom: BorderSide(color: borderColor, width: 1)),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.restaurant_menu, color: Color(0xFFE07A5F), size: 28),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Master Şef',
+                        style: GoogleFonts.nunito(
+                          color: textDark,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: const BorderSide(color: kPrimaryColor, width: 2.0),
-                ),
-              ),
+                const SizedBox(height: 20),
+                // Menü Linkleri
+                _buildMenuItem('Giriş', Icons.dashboard_outlined),
+                _buildMenuItem('Yemek Tarifleri', Icons.receipt_long_outlined),
+                _buildMenuItem('Listeleri', Icons.format_list_bulleted),
+                _buildMenuItem('Ayarlar', Icons.settings_outlined),
+              ],
             ),
           ),
 
-          SizedBox(
-            height: 40,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final category = _categories[index];
-                final isSelected = category == _selectedCategory;
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedCategory = category;
-                        _filterRecipes();
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      decoration: BoxDecoration(
-                        color: isSelected ? kPrimaryColor : kSurfaceColor,
-                        borderRadius: BorderRadius.circular(20.0), 
-                        border: Border.all(
-                          color: isSelected ? kPrimaryColor : kBorderColor,
+          // ==========================================
+          // 2. VE 3. BÖLÜM: ÜST MENÜ (TOPBAR) VE ANA İÇERİK
+          // ==========================================
+          Expanded(
+            child: Column(
+              children: [
+                // --- ÜST MENÜ (TOPBAR) ---
+                Container(
+                  height: 80,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  decoration: BoxDecoration(
+                    color: surfaceColor,
+                    border: Border(bottom: BorderSide(color: borderColor, width: 1)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Sol taraf (Şimdilik sayfa başlığı)
+                      Text(
+                        _selectedMenuItem,
+                        style: GoogleFonts.nunito(
+                          color: textDark,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
                         ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: kPrimaryColor.withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : [],
                       ),
-                      child: Row(
+                      // Sağ taraf (Gündüz/Gece ve Çıkış)
+                      Row(
                         children: [
-                          if (isSelected) ...[
-                            const Icon(Icons.check, size: 14, color: Colors.white),
-                            const SizedBox(width: 4),
-                          ],
-                          Text(
-                            category,
-                            style: GoogleFonts.nunito(
-                              color: isSelected ? Colors.white : kTextMuted,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
-                              fontSize: 14,
+                          // Gündüz/Gece Modu Butonu
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _isDarkMode = !_isDarkMode;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: borderColor),
+                                borderRadius: BorderRadius.circular(12),
+                                color: _isDarkMode ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _isDarkMode ? 'Karanlık Mod' : 'Aydınlık Mod',
+                                    style: GoogleFonts.nunito(color: textDark, fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    _isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                                    color: _isDarkMode ? Colors.blue[300] : Colors.orange,
+                                    size: 18,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Çıkış (Power) Butonu
+                          InkWell(
+                            onTap: () => exit(0), // Uygulamayı kapatır
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF1F2), // Master UI Kırmızı Light
+                                border: Border.all(color: const Color(0xFFFECDD3)),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Icon(Icons.power_settings_new, color: Color(0xFFF43F5E), size: 20),
                             ),
                           ),
                         ],
+                      )
+                    ],
+                  ),
+                ),
+
+                // --- ANA İÇERİK (YEMEK TARİFLERİ ALANI) ---
+                Expanded(
+                  child: _selectedMenuItem == 'Yemek Tarifleri' 
+                  ? Column(
+                      children: [
+                        // Arama Çubuğu
+                        Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: TextField(
+                            controller: _searchController,
+                            style: TextStyle(color: textDark),
+                            decoration: InputDecoration(
+                              hintText: 'Tariflerde ara...',
+                              hintStyle: GoogleFonts.nunito(color: textMuted, fontWeight: FontWeight.w600),
+                              prefixIcon: Icon(Icons.search, color: textMuted),
+                              filled: true,
+                              fillColor: surfaceColor,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide(color: borderColor, width: 1.0),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide(color: primaryColor, width: 2.0),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Kategoriler
+                        SizedBox(
+                          height: 40,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            itemCount: _categories.length,
+                            itemBuilder: (context, index) {
+                              final category = _categories[index];
+                              final isSelected = category == _selectedCategory;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedCategory = category;
+                                      _filterRecipes();
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? primaryColor : surfaceColor,
+                                      borderRadius: BorderRadius.circular(20.0),
+                                      border: Border.all(
+                                        color: isSelected ? primaryColor : borderColor,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        if (isSelected) ...[
+                                          const Icon(Icons.check, size: 14, color: Colors.white),
+                                          const SizedBox(width: 4),
+                                        ],
+                                        Text(
+                                          category,
+                                          style: GoogleFonts.nunito(
+                                            color: isSelected ? Colors.white : textMuted,
+                                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 24),
+
+                        // Tarif Listesi
+                        Expanded(
+                          child: _filteredRecipes.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'Tarif bulunamadı.',
+                                    style: GoogleFonts.nunito(color: textMuted, fontSize: 16, fontWeight: FontWeight.w600),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  itemCount: _filteredRecipes.length,
+                                  itemBuilder: (context, index) {
+                                    final recipe = _filteredRecipes[index];
+                                    return RecipeCard(
+                                      title: recipe.title,
+                                      category: recipe.category,
+                                      time: '${recipe.prepTime ?? 0} dk',
+                                      difficulty: recipe.difficulty ?? '-',
+                                      imagePath: recipe.coverImage ?? 'assets/placeholder.png',
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => RecipeDetailScreen(recipe: recipe),
+                                          ),
+                                        ).then((_) => _refreshRecipes());
+                                      },
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
+                    )
+                  // Eğer Sol menüden başka bir şey seçilirse burası görünür (Şimdilik yer tutucu)
+                  : Center(
+                      child: Text(
+                        '$_selectedMenuItem Ekranı Yapım Aşamasında',
+                        style: GoogleFonts.nunito(color: textMuted, fontSize: 18),
                       ),
                     ),
-                  ),
-                );
-              },
+                ),
+              ],
             ),
-          ),
-          
-          const SizedBox(height: 16),
-
-          Expanded(
-            child: _filteredRecipes.isEmpty
-                ? Center(
-                    child: Text(
-                      'Tarif bulunamadı.',
-                      style: GoogleFonts.nunito(color: kTextMuted, fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: _filteredRecipes.length,
-                    itemBuilder: (context, index) {
-                      final recipe = _filteredRecipes[index];
-                      return RecipeCard( 
-                        // DEĞİŞTİRİLDİ: Modeldeki değişken isimleri birebir uygulandı. Nullable değerler (??) ile korumaya alındı.
-                        title: recipe.title,
-                        category: recipe.category,
-                        time: '${recipe.prepTime ?? 0} dk', 
-                        difficulty: recipe.difficulty ?? '-',
-                        imagePath: recipe.coverImage ?? 'assets/placeholder.png', 
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RecipeDetailScreen(recipe: recipe),
-                            ),
-                          ).then((_) => _refreshRecipes());
-                        },
-                      );
-                    },
-                  ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AddRecipeScreen()),
-          );
-          _refreshRecipes(); 
-        },
-        backgroundColor: kPrimaryLight,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-          side: const BorderSide(color: kPrimaryColor, width: 1.5),
-        ),
-        icon: const Icon(Icons.add, color: kPrimaryColor),
-        label: Text(
-          'Yeni Tarif',
-          style: GoogleFonts.nunito(
-            color: kPrimaryColor,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
+      floatingActionButton: _selectedMenuItem == 'Yemek Tarifleri' 
+        ? FloatingActionButton.extended(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddRecipeScreen()),
+              );
+              _refreshRecipes();
+            },
+            backgroundColor: const Color(0xFFFEE8E1),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+              side: const BorderSide(color: Color(0xFFE07A5F), width: 1.5),
+            ),
+            icon: const Icon(Icons.add, color: Color(0xFFE07A5F)),
+            label: Text(
+              'Yeni Tarif',
+              style: GoogleFonts.nunito(
+                color: const Color(0xFFE07A5F),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          )
+        : null, // Diğer menülerde FAB butonunu gizler
     );
   }
 }
