@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // YENİ EKLENDİ: Font paketi eklendi.
+import 'package:google_fonts/google_fonts.dart'; 
 import '../models/recipe_model.dart';
 import '../database/database_helper.dart';
-import '../widgets/recipe_card.dart'; // YENİ EKLENDİ: Yeni yazdığımız kart widget'ı import edildi.
+import '../widgets/recipe_card.dart'; 
 import 'recipe_detail_screen.dart';
 import 'add_recipe_screen.dart';
 
-// --- YENİ EKLENDİ: Master UI Mutfak Renk Paleti Sabitleri ---
 const Color kBackgroundColor = Color(0xFFF8FAFC); 
 const Color kSurfaceColor = Color(0xFFFFFFFF); 
-const Color kPrimaryColor = Color(0xFFE07A5F); // Mutfak için sıcak kiremit rengi
+const Color kPrimaryColor = Color(0xFFE07A5F); 
 const Color kPrimaryLight = Color(0xFFFEE8E1); 
 const Color kBorderColor = Color(0xFFE2E8F0); 
 const Color kTextDark = Color(0xFF1E293B); 
 const Color kTextMuted = Color(0xFF64748B); 
 
 class HomeScreen extends StatefulWidget {
+  // YENİ EKLENDİ: main.dart'taki "const HomeScreen()" hatasını gidermek için eklendi.
+  const HomeScreen({super.key});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  // DEĞİŞTİRİLDİ: Singleton yapısına uygun olarak "DatabaseHelper.instance" kullanıldı.
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   List<Recipe> _recipes = [];
   List<Recipe> _filteredRecipes = [];
   TextEditingController _searchController = TextEditingController();
@@ -50,20 +53,20 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.addListener(_filterRecipes);
   }
 
-  // MEVCUT KOD: Veritabanından verileri çekme fonksiyonu korundu.
   Future<void> _refreshRecipes() async {
-    final data = await _dbHelper.getRecipes();
+    // DEĞİŞTİRİLDİ: "getRecipes" yerine database_helper.dart içindeki gerçek metot "readAllRecipes" kullanıldı.
+    final data = await _dbHelper.readAllRecipes();
     setState(() {
       _recipes = data;
       _filterRecipes();
     });
   }
 
-  // MEVCUT KOD: Arama ve kategori filtreleme mantığı korundu.
   void _filterRecipes() {
     setState(() {
       _filteredRecipes = _recipes.where((recipe) {
-        final matchesSearch = recipe.name.toLowerCase().contains(_searchController.text.toLowerCase());
+        // DEĞİŞTİRİLDİ: "recipe.name" yerine modeldeki gerçek değer "recipe.title" kullanıldı.
+        final matchesSearch = recipe.title.toLowerCase().contains(_searchController.text.toLowerCase());
         final matchesCategory = _selectedCategory == 'Tümü' || recipe.category == _selectedCategory;
         return matchesSearch && matchesCategory;
       }).toList();
@@ -74,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      // YENİ EKLENDİ: Şeftali rengi AppBar silindi, yerine beyaz, temiz Master UI Topbar eklendi.
       appBar: AppBar(
         backgroundColor: kSurfaceColor,
         elevation: 0, 
@@ -94,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // YENİ EKLENDİ: Master UI standartlarında yuvarlak hatlı form elemanı (Arama)
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -118,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // YENİ EKLENDİ: Master UI Kategori Seçicileri (Tabs/Pills)
           SizedBox(
             height: 40,
             child: ListView.builder(
@@ -181,7 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
           
           const SizedBox(height: 16),
 
-          // YENİ EKLENDİ: Eski liste yapısı silinip yeni yazdığımız RecipeCard bileşenine bağlandı.
           Expanded(
             child: _filteredRecipes.isEmpty
                 ? Center(
@@ -196,13 +195,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       final recipe = _filteredRecipes[index];
                       return RecipeCard( 
-                        title: recipe.name,
+                        // DEĞİŞTİRİLDİ: Modeldeki değişken isimleri birebir uygulandı. Nullable değerler (??) ile korumaya alındı.
+                        title: recipe.title,
                         category: recipe.category,
-                        time: '${recipe.prepTime} dk', 
-                        difficulty: recipe.difficulty,
-                        imagePath: recipe.imagePath ?? 'assets/placeholder.png', 
+                        time: '${recipe.prepTime ?? 0} dk', 
+                        difficulty: recipe.difficulty ?? '-',
+                        imagePath: recipe.coverImage ?? 'assets/placeholder.png', 
                         onTap: () {
-                          // Detay sayfasına geçiş işlemi
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -216,14 +215,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      // YENİ EKLENDİ: Buton Master UI kavislerine ve renklerine uyarlandı.
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => AddRecipeScreen()),
           );
-          _refreshRecipes(); // Dönüşte listeyi güncelle
+          _refreshRecipes(); 
         },
         backgroundColor: kPrimaryLight,
         elevation: 0,
