@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // YENİ EKLENDİ: Okunabilirliği artırmak için Master UI fontu eklendi.
+import 'package:google_fonts/google_fonts.dart';
 
 class RecipeCard extends StatelessWidget {
   final String title;
@@ -8,6 +8,7 @@ class RecipeCard extends StatelessWidget {
   final String difficulty;
   final String imagePath;
   final VoidCallback onTap;
+  final bool isDarkMode; // YENİ EKLENDİ: Karanlık mod desteği için
 
   const RecipeCard({
     Key? key,
@@ -17,25 +18,31 @@ class RecipeCard extends StatelessWidget {
     required this.difficulty,
     required this.imagePath,
     required this.onTap,
+    this.isDarkMode = false, // Varsayılan olarak aydınlık mod
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // YENİ EKLENDİ: Karanlık moda göre dinamik renk paleti
+    final Color surfaceColor = isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
+    final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final Color textDark = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+    final Color textMuted = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12.0),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFFFF), // YENİ EKLENDİ: Master UI Surface (Beyaz Kart Arka Planı)
-          borderRadius: BorderRadius.circular(12.0), // YENİ EKLENDİ: Master UI Standart Kavis (12px)
+          color: surfaceColor, 
+          borderRadius: BorderRadius.circular(12.0), 
           border: Border.all(
-            color: const Color(0xFFE2E8F0), // YENİ EKLENDİ: Master UI Standart Kenarlık Rengi
+            color: borderColor, 
             width: 1.0,
           ),
           boxShadow: [
-            // YENİ EKLENDİ: Dikkati dağıtmayan çok hafif kart gölgesi
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05), // Karanlık modda gölge hafif koyulaşır
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -56,8 +63,8 @@ class RecipeCard extends StatelessWidget {
                   errorBuilder: (context, error, stackTrace) => Container(
                     width: 70,
                     height: 70,
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                    color: isDarkMode ? const Color(0xFF334155) : Colors.grey[200],
+                    child: Icon(Icons.broken_image, color: textMuted),
                   ),
                 ),
               ),
@@ -73,7 +80,7 @@ class RecipeCard extends StatelessWidget {
                       style: GoogleFonts.nunito(
                         fontSize: 16,
                         fontWeight: FontWeight.w700, 
-                        color: const Color(0xFF1E293B), // YENİ EKLENDİ: Master UI Koyu Metin Rengi
+                        color: textDark, 
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -84,30 +91,30 @@ class RecipeCard extends StatelessWidget {
                       style: GoogleFonts.nunito(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF64748B), // YENİ EKLENDİ: Master UI Pasif Metin Rengi
+                        color: textMuted, 
                       ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.access_time, size: 14, color: Color(0xFF64748B)),
+                        Icon(Icons.access_time, size: 14, color: textMuted),
                         const SizedBox(width: 4),
                         Text(
                           time,
                           style: GoogleFonts.nunito(
                             fontSize: 12,
-                            color: const Color(0xFF64748B),
+                            color: textMuted,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Icon(Icons.bar_chart, size: 14, color: Color(0xFFE07A5F)), // YENİ EKLENDİ: Mutfak temasına uygun kiremit rengi vurgu
+                        const Icon(Icons.bar_chart, size: 14, color: Color(0xFFE07A5F)), 
                         const SizedBox(width: 4),
                         Text(
                           difficulty,
                           style: GoogleFonts.nunito(
                             fontSize: 12,
-                            color: const Color(0xFF64748B),
+                            color: textMuted,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -118,9 +125,9 @@ class RecipeCard extends StatelessWidget {
               ),
               
               // 3. Sağ Ok İkonu
-              const Icon(
+              Icon(
                 Icons.chevron_right,
-                color: Color(0xFF94A3B8), 
+                color: textMuted, 
               ),
             ],
           ),

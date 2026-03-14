@@ -1,4 +1,4 @@
-import 'dart:io'; // YENİ EKLENDİ: Uygulamadan çıkış (exit) yapabilmek için eklendi.
+import 'dart:io'; 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/recipe_model.dart';
@@ -20,10 +20,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Recipe> _filteredRecipes = [];
   TextEditingController _searchController = TextEditingController();
   
-  // YENİ EKLENDİ: Sol menü ve tema yönetimi için durum değişkenleri
   String _selectedCategory = 'Tümü';
-  String _selectedMenuItem = 'Yemek Tarifleri'; // Sol menüdeki aktif sekme
-  bool _isDarkMode = false; // Gündüz/Gece modu kontrolü
+  String _selectedMenuItem = 'Yemek Tarifleri'; 
+  bool _isDarkMode = false; 
 
   final List<String> _categories = [
     'Tümü', 'Çorba', 'Ana Yemek', 'Sebze Yemeği', 'Et Yemeği', 
@@ -56,10 +55,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // YENİ EKLENDİ: Sol Menü (Sidebar) elemanı oluşturucu fonksiyon
   Widget _buildMenuItem(String title, IconData icon) {
     bool isActive = _selectedMenuItem == title;
-    // Renkler temaya göre ayarlanıyor
     Color primaryColor = const Color(0xFFE07A5F);
     Color textColor = isActive ? primaryColor : (_isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B));
     Color bgColor = isActive 
@@ -99,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // DEĞİŞTİRİLDİ: Gündüz/Gece moduna göre dinamik renk paleti tanımlandı
     final Color bgColor = _isDarkMode ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
     final Color surfaceColor = _isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
     final Color borderColor = _isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
@@ -109,14 +105,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      // DEĞİŞTİRİLDİ: Tüm ekran yatay bir Row (Satır) içine alındı
       body: Row(
         children: [
           // ==========================================
           // 1. BÖLÜM: SOL MENÜ (SIDEBAR)
           // ==========================================
           Container(
-            width: 260, // Sol menü genişliği
+            width: 260, 
             decoration: BoxDecoration(
               color: surfaceColor,
               border: Border(right: BorderSide(color: borderColor, width: 1)),
@@ -129,7 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 80,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   alignment: Alignment.centerLeft,
-                  border: Border(bottom: BorderSide(color: borderColor, width: 1)),
+                  // DEĞİŞTİRİLDİ: Hata veren "border:" yapısı düzeltildi, BoxDecoration içine alındı.
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: borderColor, width: 1)),
+                  ),
                   child: Row(
                     children: [
                       const Icon(Icons.restaurant_menu, color: Color(0xFFE07A5F), size: 28),
@@ -146,7 +144,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Menü Linkleri
                 _buildMenuItem('Giriş', Icons.dashboard_outlined),
                 _buildMenuItem('Yemek Tarifleri', Icons.receipt_long_outlined),
                 _buildMenuItem('Listeleri', Icons.format_list_bulleted),
@@ -172,7 +169,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Sol taraf (Şimdilik sayfa başlığı)
                       Text(
                         _selectedMenuItem,
                         style: GoogleFonts.nunito(
@@ -181,10 +177,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      // Sağ taraf (Gündüz/Gece ve Çıkış)
                       Row(
                         children: [
-                          // Gündüz/Gece Modu Butonu
                           InkWell(
                             onTap: () {
                               setState(() {
@@ -215,14 +209,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          // Çıkış (Power) Butonu
                           InkWell(
-                            onTap: () => exit(0), // Uygulamayı kapatır
+                            onTap: () => exit(0), 
                             child: Container(
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFF1F2), // Master UI Kırmızı Light
+                                color: const Color(0xFFFFF1F2), 
                                 border: Border.all(color: const Color(0xFFFECDD3)),
                                 borderRadius: BorderRadius.circular(20),
                               ),
@@ -235,12 +228,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // --- ANA İÇERİK (YEMEK TARİFLERİ ALANI) ---
+                // --- ANA İÇERİK ---
                 Expanded(
                   child: _selectedMenuItem == 'Yemek Tarifleri' 
                   ? Column(
                       children: [
-                        // Arama Çubuğu
                         Padding(
                           padding: const EdgeInsets.all(24.0),
                           child: TextField(
@@ -265,7 +257,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
-                        // Kategoriler
                         SizedBox(
                           height: 40,
                           child: ListView.builder(
@@ -319,7 +310,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         
                         const SizedBox(height: 24),
 
-                        // Tarif Listesi
                         Expanded(
                           child: _filteredRecipes.isEmpty
                               ? Center(
@@ -339,6 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       time: '${recipe.prepTime ?? 0} dk',
                                       difficulty: recipe.difficulty ?? '-',
                                       imagePath: recipe.coverImage ?? 'assets/placeholder.png',
+                                      isDarkMode: _isDarkMode, // DEĞİŞTİRİLDİ: Dark mode durumu karta geçirildi
                                       onTap: () {
                                         Navigator.push(
                                           context,
@@ -353,7 +344,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     )
-                  // Eğer Sol menüden başka bir şey seçilirse burası görünür (Şimdilik yer tutucu)
                   : Center(
                       child: Text(
                         '$_selectedMenuItem Ekranı Yapım Aşamasında',
@@ -375,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
               );
               _refreshRecipes();
             },
-            backgroundColor: const Color(0xFFFEE8E1),
+            backgroundColor: _isDarkMode ? primaryColor.withOpacity(0.2) : const Color(0xFFFEE8E1),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.0),
@@ -390,7 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           )
-        : null, // Diğer menülerde FAB butonunu gizler
+        : null, 
     );
   }
 }

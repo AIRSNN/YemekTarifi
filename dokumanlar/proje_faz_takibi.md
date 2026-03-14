@@ -91,3 +91,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 4 (Hata Giderme)
 - `home_screen.dart` dosyasındaki `Container` border syntax hatası (`BoxDecoration` eksikliği) giderildi. Ayrıca `recipe_card.dart` widget'ına `isDarkMode` parametresi eklenerek karanlık mod uyumluluğu sağlandı.
+
+## Faz: Master UI Entegrasyonu - Adım 5 (Master Layout Mimarisi)
+- Tüm sayfalarda ortak kullanılacak Sol Menü (Sidebar) ve Üst Menü (Topbar) bileşenlerini barındıran `lib/widgets/master_layout.dart` oluşturuldu. Global tema yönetimi için `ValueNotifier` tabanlı `AppTheme` sınıfı kuruldu. `home_screen.dart` dosyası bu yeni kapsayıcı mimarisini kullanacak şekilde tamamen sadeleştirildi.
