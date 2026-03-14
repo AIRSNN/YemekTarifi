@@ -106,3 +106,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 8 (Image Picker ve UI İyileştirmesi)
 - `image_picker` paketi eklendi. `add_recipe_screen.dart` dosyasına galeriden resim seçme ve `DatabaseHelper` üzerinden locale kaydetme özelliği eklendi. `recipe_detail_screen.dart` dosyasındaki kapak fotoğrafı boyutu küçültülerek sinematik oran ve gradient gölge ile daha şık (premium) bir hale getirildi.
+
+## Faz: Master UI Entegrasyonu - Adım 9 (Kart Resmi Düzeltmesi)
+- `recipe_card.dart` bileşeni güncellendi. Liste elemanlarında resimlerin görünmemesi sorunu, `FutureBuilder` ve `DatabaseHelper.instance.getImagePath` kullanılarak yerel dosya okuma mantığına geçirilerek çözüldü.
