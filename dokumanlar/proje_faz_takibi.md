@@ -109,3 +109,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 9 (Kart Resmi Düzeltmesi)
 - `recipe_card.dart` bileşeni güncellendi. Liste elemanlarında resimlerin görünmemesi sorunu, `FutureBuilder` ve `DatabaseHelper.instance.getImagePath` kullanılarak yerel dosya okuma mantığına geçirilerek çözüldü.
+
+## Faz: Master UI Entegrasyonu - Adım 10 (Düzenle ve Sil İşlemleri)
+- `edit_recipe_screen.dart` sayfası `MasterLayout` mimarisine ve Master UI standartlarına uygun şekilde baştan yazıldı. `recipe_detail_screen.dart` sayfasındaki Düzenle ve Sil ikonlarına işlevsellik kazandırıldı. Silme işlemi için onay diyaloğu eklendi. Düzenleme sonrası detay sayfasının anlık güncellenmesi sağlandı.

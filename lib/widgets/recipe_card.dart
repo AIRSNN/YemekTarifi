@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../database/database_helper.dart'; // YENİ EKLENDİ: Dosya yolunu bulmak için
 
 class RecipeCard extends StatelessWidget {
   final String title;
@@ -8,7 +10,7 @@ class RecipeCard extends StatelessWidget {
   final String difficulty;
   final String imagePath;
   final VoidCallback onTap;
-  final bool isDarkMode; // YENİ EKLENDİ: Karanlık mod desteği için
+  final bool isDarkMode; 
 
   const RecipeCard({
     Key? key,
@@ -18,12 +20,11 @@ class RecipeCard extends StatelessWidget {
     required this.difficulty,
     required this.imagePath,
     required this.onTap,
-    this.isDarkMode = false, // Varsayılan olarak aydınlık mod
+    this.isDarkMode = false, 
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // YENİ EKLENDİ: Karanlık moda göre dinamik renk paleti
     final Color surfaceColor = isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
     final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
     final Color textDark = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
@@ -42,7 +43,7 @@ class RecipeCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05), // Karanlık modda gölge hafif koyulaşır
+              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -52,21 +53,47 @@ class RecipeCard extends StatelessWidget {
           padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
-              // 1. Resim Alanı
+              // 1. Resim Alanı (GÜNCELLENDİ: FutureBuilder ile Yerel Dosya Okuma)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
-                child: Image.asset( 
-                  imagePath,
-                  width: 70,
-                  height: 70,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 70,
-                    height: 70,
-                    color: isDarkMode ? const Color(0xFF334155) : Colors.grey[200],
-                    child: Icon(Icons.broken_image, color: textMuted),
-                  ),
-                ),
+                child: imagePath != 'assets/placeholder.png' && imagePath.isNotEmpty
+                    ? FutureBuilder<String>(
+                        future: DatabaseHelper.instance.getImagePath(imagePath),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Container(
+                              width: 70, height: 70, 
+                              color: isDarkMode ? const Color(0xFF334155) : Colors.grey[200],
+                              child: const Center(
+                                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                              ),
+                            );
+                          }
+                          if (snapshot.hasData) {
+                            return Image.file(
+                              File(snapshot.data!),
+                              width: 70,
+                              height: 70,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                width: 70, height: 70,
+                                color: isDarkMode ? const Color(0xFF334155) : Colors.grey[200],
+                                child: Icon(Icons.broken_image, color: textMuted),
+                              ),
+                            );
+                          }
+                          return Container(
+                            width: 70, height: 70,
+                            color: isDarkMode ? const Color(0xFF334155) : Colors.grey[200],
+                            child: Icon(Icons.restaurant, color: textMuted),
+                          );
+                        },
+                      )
+                    : Container(
+                        width: 70, height: 70,
+                        color: isDarkMode ? const Color(0xFF334155) : Colors.grey[200],
+                        child: Icon(Icons.restaurant, color: textMuted),
+                      ),
               ),
               const SizedBox(width: 16),
               
