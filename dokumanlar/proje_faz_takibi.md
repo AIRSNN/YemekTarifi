@@ -97,3 +97,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 6 (Tarif Detay Entegrasyonu)
 - `recipe_detail_screen.dart` dosyası, tam ekran açılmak yerine `MasterLayout` kapsayıcısının içine yerleştirildi. Sayfa tasarımı, kavisli kapak fotoğrafı ve Master UI tipografisi ile yenilendi.
+
+## Faz: Master UI Entegrasyonu - Adım 7 (Tarif Ekleme Entegrasyonu)
+- `add_recipe_screen.dart` dosyası `MasterLayout` kapsayıcısının içine yerleştirildi. Form elemanları (`TextField`, `Dropdown`), Master UI tasarım prensiplerine (`BorderRadius 12`, uyumlu kenarlık renkleri) ve Karanlık/Aydınlık mod yapısına göre baştan yazıldı.

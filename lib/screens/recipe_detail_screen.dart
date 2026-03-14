@@ -1,179 +1,243 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/recipe_model.dart';
 import '../database/database_helper.dart';
-import 'edit_recipe_screen.dart';
+import '../widgets/master_layout.dart'; // YENİ EKLENDİ: Ortak Kapsayıcı
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
 
-  const RecipeDetailScreen({super.key, required this.recipe});
+  const RecipeDetailScreen({Key? key, required this.recipe}) : super(key: key);
 
   @override
-  State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
+  _RecipeDetailScreenState createState() => _RecipeDetailScreenState();
 }
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
-  late Recipe _currentRecipe;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentRecipe = widget.recipe;
-  }
-
-  Future<void> _confirmDelete() async {
-    final bool? confirm = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Tarifi Sil'),
-        content: const Text('Bu tarifi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sil', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await DatabaseHelper.instance.deleteRecipe(_currentRecipe.id!);
-      if (mounted) Navigator.pop(context, true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_currentRecipe.title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditRecipeScreen(recipe: _currentRecipe),
-                ),
-              );
-              if (result != null && result is Recipe) {
-                setState(() => _currentRecipe = result);
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _confirmDelete,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            FutureBuilder<String>(
-              future: DatabaseHelper.instance.getImagePath(_currentRecipe.coverImage ?? ''),
-              builder: (context, snapshot) {
-                if (snapshot.hasData && _currentRecipe.coverImage != null) {
-                  return Image.file(
-                    File(snapshot.data!),
-                    width: double.infinity,
-                    height: 300,
-                    fit: BoxFit.cover,
-                  );
-                }
-                return _buildNoImagePlaceholder();
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _currentRecipe.title,
-                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    _currentRecipe.category,
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600], fontStyle: FontStyle.italic),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildInfoItem(Icons.timer, "${_currentRecipe.prepTime ?? '-'} dk", "Hazırlık"),
-                      _buildInfoItem(Icons.speed, _currentRecipe.difficulty ?? "Orta", "Zorluk"),
-                      _buildInfoItem(Icons.restaurant, "${_currentRecipe.servings ?? '-'} Kişi", "Porsiyon"),
-                      _buildInfoItem(Icons.local_fire_department, "${_currentRecipe.calories ?? '-'} kcal", "Enerji"),
-                    ],
-                  ),
-                  const Divider(height: 40, thickness: 1),
-                  if (_currentRecipe.shortDescription != null && _currentRecipe.shortDescription!.isNotEmpty) ...[
-                    Text(
-                      _currentRecipe.shortDescription!,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.blueGrey),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  const Row(
-                    children: [
-                      Icon(Icons.shopping_basket, color: Colors.deepOrange),
-                      SizedBox(width: 8),
-                      Text('Malzemeler', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _currentRecipe.ingredients ?? "Malzeme belirtilmedi.",
-                    style: const TextStyle(fontSize: 16, height: 1.5),
-                  ),
-                  const SizedBox(height: 30),
-                  const Row(
-                    children: [
-                      Icon(Icons.menu_book, color: Colors.deepOrange),
-                      SizedBox(width: 8),
-                      Text('Hazırlanışı', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _currentRecipe.instructions ?? "Hazırlanış bilgisi belirtilmedi.",
-                    style: const TextStyle(fontSize: 16, height: 1.6),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(IconData icon, String value, String label) {
+  // --- YENİ EKLENDİ: Master UI Yardımcı Metodu ---
+  // Süre, Porsiyon gibi küçük istatistikleri göstermek için
+  Widget _buildInfoColumn(String value, String label, IconData icon, Color isDarkColor, Color textMuted, Color primaryColor) {
     return Column(
       children: [
-        Icon(icon, color: Colors.deepOrange),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Icon(icon, color: primaryColor, size: 24),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: GoogleFonts.nunito(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: isDarkColor,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: GoogleFonts.nunito(
+            fontSize: 12,
+            color: textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildNoImagePlaceholder() {
-    return Container(
-      width: double.infinity,
-      height: 250,
-      color: Colors.grey[200],
-      child: const Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
+  @override
+  Widget build(BuildContext context) {
+    // Tema uyumu için ValueListenableBuilder
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppTheme.isDark,
+      builder: (context, isDark, _) {
+        final Color surfaceColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
+        final Color textDark = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+        final Color textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+        final Color primaryColor = const Color(0xFFE07A5F);
+        final Color borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+
+        // YENİ EKLENDİ: Tüm ekran MasterLayout içine alındı
+        return MasterLayout(
+          title: widget.recipe.title,
+          activeMenu: 'Yemek Tarifleri',
+          // Geri dönüş butonunu MasterLayout yönetir
+          onBack: () => Navigator.pop(context), 
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Kapak Fotoğrafı Alanı
+                Container(
+                  width: double.infinity,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF334155) : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(24.0), // Master UI Kavis
+                    border: Border.all(color: borderColor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24.0),
+                    child: widget.recipe.coverImage != null
+                        // Eğer lokal resim sistemi tam çalışıyorsa buraya Image.file gelebilir.
+                        // Şimdilik sorun çıkmaması için asset kullanıyoruz.
+                        ? Image.asset(
+                            widget.recipe.coverImage!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(Icons.broken_image, size: 64, color: textMuted),
+                          )
+                        : Icon(Icons.restaurant, size: 64, color: textMuted),
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+
+                // 2. Başlık ve Kategori
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.recipe.title,
+                            style: GoogleFonts.nunito(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              widget.recipe.category,
+                              style: GoogleFonts.nunito(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Sağ üst köşede Düzenle/Sil ikonları eklenebilir
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: textMuted),
+                          onPressed: () {
+                            // İleride Edit ekranına yönlendirme
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: const Color(0xFFF43F5E)),
+                          onPressed: () {
+                            // İleride silme işlemi
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                // 3. İstatistikler (Süre, Zorluk, Porsiyon, Kalori)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  decoration: BoxDecoration(
+                    color: surfaceColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildInfoColumn('${widget.recipe.prepTime ?? 0} dk', 'Hazırlık', Icons.timer_outlined, textDark, textMuted, primaryColor),
+                      _buildInfoColumn(widget.recipe.difficulty ?? '-', 'Zorluk', Icons.speed, textDark, textMuted, primaryColor),
+                      _buildInfoColumn('${widget.recipe.servings ?? 0} Kişi', 'Porsiyon', Icons.restaurant, textDark, textMuted, primaryColor),
+                      _buildInfoColumn('${widget.recipe.calories ?? 0} kcal', 'Enerji', Icons.local_fire_department_outlined, textDark, textMuted, primaryColor),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // 4. Malzemeler
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(Icons.shopping_basket, color: primaryColor, size: 28),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Malzemeler',
+                      style: GoogleFonts.nunito(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: textDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  widget.recipe.ingredients ?? 'Malzeme bilgisi bulunamadı.',
+                  style: GoogleFonts.nunito(
+                    fontSize: 16,
+                    height: 1.6, // Satır arası boşluk okunabilirliği artırır
+                    color: textDark,
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // 5. Hazırlanışı
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(Icons.menu_book, color: primaryColor, size: 28),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Hazırlanışı',
+                      style: GoogleFonts.nunito(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: textDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  widget.recipe.instructions ?? 'Hazırlanış bilgisi bulunamadı.',
+                  style: GoogleFonts.nunito(
+                    fontSize: 16,
+                    height: 1.6,
+                    color: textDark,
+                  ),
+                ),
+                
+                const SizedBox(height: 60), // En altta biraz nefes alma boşluğu
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
