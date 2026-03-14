@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import 'package:image_picker/image_picker.dart'; // Eğer projede yüklüyse aktif et, resim seçmek için.
+import 'package:image_picker/image_picker.dart'; // YENİ EKLENDİ
 import '../models/recipe_model.dart';
 import '../database/database_helper.dart';
-import '../widgets/master_layout.dart'; // YENİ EKLENDİ: Ortak Kapsayıcı
+import '../widgets/master_layout.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   const AddRecipeScreen({Key? key}) : super(key: key);
@@ -17,7 +17,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
-  // Form Kontrolcüleri
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _shortDescController = TextEditingController();
   final TextEditingController _prepTimeController = TextEditingController();
@@ -29,7 +28,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   String _selectedCategory = 'Ana Yemek';
   String _selectedDifficulty = 'Orta';
-  String? _imagePath; // İleride resim seçildiğinde dosya yolunu tutacak
+  
+  // YENİ EKLENDİ: Seçilen resim dosyasını ekranda göstermek için
+  File? _selectedImageFile; 
 
   final List<String> _categories = [
     'Çorba', 'Ana Yemek', 'Sebze Yemeği', 'Et Yemeği', 
@@ -39,7 +40,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   final List<String> _difficulties = ['Kolay', 'Orta', 'Zor'];
 
-  // YENİ EKLENDİ: Form elemanları için ortak tasarım şablonu (Master UI)
   InputDecoration _buildInputDecoration(String hint, IconData icon, Color surfaceColor, Color borderColor, Color primaryColor, Color textMuted) {
     return InputDecoration(
       hintText: hint,
@@ -67,8 +67,27 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
+  // YENİ EKLENDİ: Galeriden resim seçme fonksiyonu
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      setState(() {
+        _selectedImageFile = File(image.path);
+      });
+    }
+  }
+
   void _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
+      
+      String? finalImageName;
+      // YENİ EKLENDİ: Eğer resim seçildiyse DatabaseHelper ile locale kopyala ve sadece dosya adını al
+      if (_selectedImageFile != null) {
+        finalImageName = await _dbHelper.saveImageLocally(_selectedImageFile!);
+      }
+
       final newRecipe = Recipe(
         title: _titleController.text,
         shortDescription: _shortDescController.text,
@@ -80,18 +99,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         cookTime: int.tryParse(_cookTimeController.text) ?? 0,
         servings: int.tryParse(_servingsController.text) ?? 0,
         calories: int.tryParse(_caloriesController.text) ?? 0,
-        coverImage: _imagePath, 
+        coverImage: finalImageName, // Kopyalanan yeni resmin adı
         createdAt: DateTime.now().toIso8601String(),
       );
 
       await _dbHelper.createRecipe(newRecipe);
-      Navigator.pop(context); // Kaydettikten sonra geri dön
+      Navigator.pop(context); 
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // YENİ EKLENDİ: Tema uyumu
     return ValueListenableBuilder<bool>(
       valueListenable: AppTheme.isDark,
       builder: (context, isDark, _) {
@@ -101,7 +119,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         final Color primaryColor = const Color(0xFFE07A5F);
         final Color borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
 
-        // YENİ EKLENDİ: Ekran MasterLayout içine alındı
         return MasterLayout(
           title: 'Yeni Tarif Ekle',
           activeMenu: 'Yemek Tarifleri',
@@ -113,11 +130,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Resim Ekleme Alanı
+                  // 1. Resim Ekleme Alanı (GÜNCELLENDİ)
                   GestureDetector(
-                    onTap: () {
-                      // İleride ImagePicker fonksiyonu buraya bağlanacak
-                    },
+                    onTap: _pickImage, // Tıklayınca dosya seçici açılır
                     child: Container(
                       width: double.infinity,
                       height: 200,
@@ -125,31 +140,41 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(16.0),
                         border: Border.all(
-                          color: borderColor,
+                          color: _selectedImageFile != null ? primaryColor : borderColor,
                           width: 2,
                         ),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add_a_photo, size: 48, color: textMuted),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Vitrin Resmi Ekle',
-                            style: GoogleFonts.nunito(
-                              color: textMuted,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                      child: _selectedImageFile != null
+                          // Resim seçildiyse resmi göster
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(14.0),
+                              child: Image.file(
+                                _selectedImageFile!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                              ),
+                            )
+                          // Resim yoksa standart ikon göster
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo, size: 48, color: textMuted),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Vitrin Resmi Seç',
+                                  style: GoogleFonts.nunito(
+                                    color: textMuted,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                   
                   const SizedBox(height: 24),
 
-                  // 2. Temel Bilgiler
                   TextFormField(
                     controller: _titleController,
                     style: TextStyle(color: textDark),
@@ -165,7 +190,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 3. Kategori ve Zorluk (Yanyana)
                   Row(
                     children: [
                       Expanded(
@@ -193,7 +217,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 4. Süreler ve Porsiyon (Yanyana)
                   Row(
                     children: [
                       Expanded(
@@ -226,7 +249,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 5. Kalori
                   TextFormField(
                     controller: _caloriesController,
                     keyboardType: TextInputType.number,
@@ -235,7 +257,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 6. Çok Satırlı Alanlar (Malzemeler ve Hazırlanışı)
                   TextFormField(
                     controller: _ingredientsController,
                     maxLines: 5,
@@ -252,7 +273,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // 7. Kaydet Butonu (Master UI Solid State)
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -268,7 +288,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor, // Kiremit Rengi
+                        backgroundColor: primaryColor,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
@@ -276,7 +296,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       ),
                     ),
                   ),
-                  
                   const SizedBox(height: 40),
                 ],
               ),

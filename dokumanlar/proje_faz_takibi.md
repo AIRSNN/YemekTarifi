@@ -103,3 +103,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 7 (Tarif Ekleme Başarılı)
 - `add_recipe_screen.dart` dosyası başarıyla `MasterLayout` içine oturtuldu, karanlık/aydınlık mod uyumu sağlandı ve giriş formları Master UI tasarım kurallarına göre güncellendi. Uygulama iskeleti ana hatlarıyla tamamlandı.
+
+## Faz: Master UI Entegrasyonu - Adım 8 (Image Picker ve UI İyileştirmesi)
+- `image_picker` paketi eklendi. `add_recipe_screen.dart` dosyasına galeriden resim seçme ve `DatabaseHelper` üzerinden locale kaydetme özelliği eklendi. `recipe_detail_screen.dart` dosyasındaki kapak fotoğrafı boyutu küçültülerek sinematik oran ve gradient gölge ile daha şık (premium) bir hale getirildi.

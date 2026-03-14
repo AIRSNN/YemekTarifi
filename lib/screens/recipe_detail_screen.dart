@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/recipe_model.dart';
 import '../database/database_helper.dart';
-import '../widgets/master_layout.dart'; // YENİ EKLENDİ: Ortak Kapsayıcı
+import '../widgets/master_layout.dart'; 
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -15,8 +15,7 @@ class RecipeDetailScreen extends StatefulWidget {
 }
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
-  // --- YENİ EKLENDİ: Master UI Yardımcı Metodu ---
-  // Süre, Porsiyon gibi küçük istatistikleri göstermek için
+
   Widget _buildInfoColumn(String value, String label, IconData icon, Color isDarkColor, Color textMuted, Color primaryColor) {
     return Column(
       children: [
@@ -45,7 +44,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Tema uyumu için ValueListenableBuilder
     return ValueListenableBuilder<bool>(
       valueListenable: AppTheme.isDark,
       builder: (context, isDark, _) {
@@ -53,53 +51,79 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         final Color textDark = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
         final Color textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
         final Color primaryColor = const Color(0xFFE07A5F);
-        final Color borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
 
-        // YENİ EKLENDİ: Tüm ekran MasterLayout içine alındı
         return MasterLayout(
           title: widget.recipe.title,
           activeMenu: 'Yemek Tarifleri',
-          // Geri dönüş butonunu MasterLayout yönetir
           onBack: () => Navigator.pop(context), 
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(32.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Kapak Fotoğrafı Alanı
+                // 1. Kapak Fotoğrafı Alanı (GÜNCELLENDİ: Sinematik Oran + Gradient)
                 Container(
                   width: double.infinity,
-                  height: 300,
+                  height: 220, // 300'den 220'ye düşürüldü (İştah kapatmaması için daha zarif bir sinematik oran)
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF334155) : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(24.0), // Master UI Kavis
-                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(20.0), 
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24.0),
-                    child: widget.recipe.coverImage != null
-                        // Eğer lokal resim sistemi tam çalışıyorsa buraya Image.file gelebilir.
-                        // Şimdilik sorun çıkmaması için asset kullanıyoruz.
-                        ? Image.asset(
-                            widget.recipe.coverImage!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Icon(Icons.broken_image, size: 64, color: textMuted),
-                          )
-                        : Icon(Icons.restaurant, size: 64, color: textMuted),
+                    borderRadius: BorderRadius.circular(20.0),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Arka Plandaki Resim (Dinamik Yükleyici eklendi)
+                        widget.recipe.coverImage != null
+                            ? FutureBuilder<String>(
+                                future: DatabaseHelper.instance.getImagePath(widget.recipe.coverImage!),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return const Center(child: CircularProgressIndicator());
+                                  }
+                                  if (snapshot.hasData) {
+                                    return Image.file(
+                                      File(snapshot.data!),
+                                      fit: BoxFit.cover,
+                                      // Eğer resim bozuksa veya bulunamazsa hata ikonu göster
+                                      errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image, size: 64, color: textMuted),
+                                    );
+                                  }
+                                  return Icon(Icons.restaurant, size: 64, color: textMuted);
+                                },
+                              )
+                            : Icon(Icons.restaurant, size: 64, color: textMuted),
+                        
+                        // YENİ EKLENDİ: Premium Dergi Efekti (Alt kısıma siyah degrade)
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.4), // Resmin altını tatlıca koyulaştırır
+                              ],
+                              stops: const [0.6, 1.0], // Degrade sadece son %40'lık dilimde başlar
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 
                 const SizedBox(height: 32),
 
-                // 2. Başlık ve Kategori
+                // Diğer her şey aynı kalıyor...
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,20 +159,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         ],
                       ),
                     ),
-                    // Sağ üst köşede Düzenle/Sil ikonları eklenebilir
                     Row(
                       children: [
                         IconButton(
                           icon: Icon(Icons.edit, color: textMuted),
-                          onPressed: () {
-                            // İleride Edit ekranına yönlendirme
-                          },
+                          onPressed: () {},
                         ),
                         IconButton(
                           icon: Icon(Icons.delete, color: const Color(0xFFF43F5E)),
-                          onPressed: () {
-                            // İleride silme işlemi
-                          },
+                          onPressed: () {},
                         ),
                       ],
                     ),
@@ -157,13 +176,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                 const SizedBox(height: 32),
 
-                // 3. İstatistikler (Süre, Zorluk, Porsiyon, Kalori)
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   decoration: BoxDecoration(
                     color: surfaceColor,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: borderColor),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -178,7 +195,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                 const SizedBox(height: 40),
 
-                // 4. Malzemeler
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -199,14 +215,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   widget.recipe.ingredients ?? 'Malzeme bilgisi bulunamadı.',
                   style: GoogleFonts.nunito(
                     fontSize: 16,
-                    height: 1.6, // Satır arası boşluk okunabilirliği artırır
+                    height: 1.6, 
                     color: textDark,
                   ),
                 ),
 
                 const SizedBox(height: 40),
 
-                // 5. Hazırlanışı
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -232,7 +247,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                 ),
                 
-                const SizedBox(height: 60), // En altta biraz nefes alma boşluğu
+                const SizedBox(height: 60), 
               ],
             ),
           ),
