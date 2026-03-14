@@ -94,3 +94,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 5 (Master Layout Mimarisi)
 - Tüm sayfalarda ortak kullanılacak Sol Menü (Sidebar) ve Üst Menü (Topbar) bileşenlerini barındıran `lib/widgets/master_layout.dart` oluşturuldu. Global tema yönetimi için `ValueNotifier` tabanlı `AppTheme` sınıfı kuruldu. `home_screen.dart` dosyası bu yeni kapsayıcı mimarisini kullanacak şekilde tamamen sadeleştirildi.
+
+## Faz: Master UI Entegrasyonu - Adım 6 (Tarif Detay Entegrasyonu)
+- `recipe_detail_screen.dart` dosyası, tam ekran açılmak yerine `MasterLayout` kapsayıcısının içine yerleştirildi. Sayfa tasarımı, kavisli kapak fotoğrafı ve Master UI tipografisi ile yenilendi.
