@@ -1,51 +1,69 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import '../database/database_helper.dart';
+import 'package:google_fonts/google_fonts.dart'; // YENİ EKLENDİ: Font paketi eklendi.
 import '../models/recipe_model.dart';
-import 'add_recipe_screen.dart';
+import '../database/database_helper.dart';
+import '../widgets/recipe_card.dart'; // YENİ EKLENDİ: Yeni yazdığımız kart widget'ı import edildi.
 import 'recipe_detail_screen.dart';
+import 'add_recipe_screen.dart';
+
+// --- YENİ EKLENDİ: Master UI Mutfak Renk Paleti Sabitleri ---
+const Color kBackgroundColor = Color(0xFFF8FAFC); 
+const Color kSurfaceColor = Color(0xFFFFFFFF); 
+const Color kPrimaryColor = Color(0xFFE07A5F); // Mutfak için sıcak kiremit rengi
+const Color kPrimaryLight = Color(0xFFFEE8E1); 
+const Color kBorderColor = Color(0xFFE2E8F0); 
+const Color kTextDark = Color(0xFF1E293B); 
+const Color kTextMuted = Color(0xFF64748B); 
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Recipe> _allRecipes = [];
+  final DatabaseHelper _dbHelper = DatabaseHelper();
+  List<Recipe> _recipes = [];
   List<Recipe> _filteredRecipes = [];
-  bool _isLoading = true;
-
-  String _searchQuery = '';
+  TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'Tümü';
 
   final List<String> _categories = [
-    'Tümü', 'Çorba', 'Ana Yemek', 'Sebze Yemeği', 'Et Yemeği', 
-    'Baklagil', 'Dolma-Sarma', 'Hamur İşi', 'Pilav', 
-    'Meze', 'Salata', 'Kahvaltılık', 'Tatlı'
+    'Tümü',
+    'Çorba',
+    'Ana Yemek',
+    'Sebze Yemeği',
+    'Et Yemeği',
+    'Baklagil',
+    'Dolma-Sarma',
+    'Hamur İşi',
+    'Pilav',
+    'Meze',
+    'Salata',
+    'Kahvaltılık',
+    'Tatlı',
   ];
 
   @override
   void initState() {
     super.initState();
     _refreshRecipes();
+    _searchController.addListener(_filterRecipes);
   }
 
+  // MEVCUT KOD: Veritabanından verileri çekme fonksiyonu korundu.
   Future<void> _refreshRecipes() async {
-    setState(() => _isLoading = true);
-    final recipes = await DatabaseHelper.instance.readAllRecipes();
+    final data = await _dbHelper.getRecipes();
     setState(() {
-      _allRecipes = recipes;
-      _applyFilters();
-      _isLoading = false;
+      _recipes = data;
+      _filterRecipes();
     });
   }
 
-  void _applyFilters() {
+  // MEVCUT KOD: Arama ve kategori filtreleme mantığı korundu.
+  void _filterRecipes() {
     setState(() {
-      _filteredRecipes = _allRecipes.where((recipe) {
-        final matchesSearch = recipe.title.toLowerCase().contains(_searchQuery.toLowerCase());
+      _filteredRecipes = _recipes.where((recipe) {
+        final matchesSearch = recipe.name.toLowerCase().contains(_searchController.text.toLowerCase());
         final matchesCategory = _selectedCategory == 'Tümü' || recipe.category == _selectedCategory;
         return matchesSearch && matchesCategory;
       }).toList();
@@ -55,171 +73,172 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: kBackgroundColor,
+      // YENİ EKLENDİ: Şeftali rengi AppBar silindi, yerine beyaz, temiz Master UI Topbar eklendi.
       appBar: AppBar(
-        title: const Text('Yemek Kitabım v3'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: kSurfaceColor,
+        elevation: 0, 
         centerTitle: true,
+        title: Text(
+          'Yemek Kitabım v3',
+          style: GoogleFonts.nunito(
+            color: kTextDark,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: kBorderColor, height: 1.0), 
+        ),
       ),
       body: Column(
         children: [
-          // 1. ARAMA ÇUBUĞU
+          // YENİ EKLENDİ: Master UI standartlarında yuvarlak hatlı form elemanı (Arama)
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(16.0),
             child: TextField(
+              controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Tariflerde ara...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                hintStyle: GoogleFonts.nunito(color: kTextMuted, fontWeight: FontWeight.w600),
+                prefixIcon: const Icon(Icons.search, color: kTextMuted),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: kSurfaceColor,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0), 
+                  borderSide: const BorderSide(color: kBorderColor, width: 1.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: const BorderSide(color: kPrimaryColor, width: 2.0),
+                ),
               ),
-              onChanged: (value) {
-                _searchQuery = value;
-                _applyFilters();
-              },
             ),
           ),
-          
-          // 2. KATEGORİ SEÇİCİ (Yatay Kaydırılabilir)
+
+          // YENİ EKLENDİ: Master UI Kategori Seçicileri (Tabs/Pills)
           SizedBox(
-            height: 45,
+            height: 40,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               itemCount: _categories.length,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
               itemBuilder: (context, index) {
                 final category = _categories[index];
+                final isSelected = category == _selectedCategory;
+
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: ChoiceChip(
-                    label: Text(category),
-                    selected: _selectedCategory == category,
-                    selectedColor: Theme.of(context).colorScheme.primaryContainer,
-                    onSelected: (selected) {
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: GestureDetector(
+                    onTap: () {
                       setState(() {
                         _selectedCategory = category;
-                        _applyFilters();
+                        _filterRecipes();
                       });
                     },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      decoration: BoxDecoration(
+                        color: isSelected ? kPrimaryColor : kSurfaceColor,
+                        borderRadius: BorderRadius.circular(20.0), 
+                        border: Border.all(
+                          color: isSelected ? kPrimaryColor : kBorderColor,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: kPrimaryColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        children: [
+                          if (isSelected) ...[
+                            const Icon(Icons.check, size: 14, color: Colors.white),
+                            const SizedBox(width: 4),
+                          ],
+                          Text(
+                            category,
+                            style: GoogleFonts.nunito(
+                              color: isSelected ? Colors.white : kTextMuted,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
             ),
           ),
-          const SizedBox(height: 8),
+          
+          const SizedBox(height: 16),
 
-          // 3. TARİF LİSTESİ (V3 Tasarımı)
+          // YENİ EKLENDİ: Eski liste yapısı silinip yeni yazdığımız RecipeCard bileşenine bağlandı.
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredRecipes.isEmpty
-                    ? const Center(child: Text('Aradığınız kriterde tarif bulunamadı.'))
-                    : ListView.builder(
-                        itemCount: _filteredRecipes.length,
-                        itemBuilder: (context, index) {
-                          final recipe = _filteredRecipes[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            elevation: 3,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(15),
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RecipeDetailScreen(recipe: recipe),
-                                  ),
-                                );
-                                _refreshRecipes();
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(10.0),
-                                child: Row(
-                                  children: [
-                                    // Tarif Resmi
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: FutureBuilder<String>(
-                                        future: DatabaseHelper.instance.getImagePath(recipe.coverImage ?? ''),
-                                        builder: (context, snapshot) {
-                                          if (snapshot.hasData && recipe.coverImage != null && recipe.coverImage!.isNotEmpty) {
-                                            return Image.file(
-                                              File(snapshot.data!),
-                                              width: 90,
-                                              height: 90,
-                                              fit: BoxFit.cover,
-                                            );
-                                          }
-                                          return Container(
-                                            width: 90,
-                                            height: 90,
-                                            color: Colors.orange[50],
-                                            child: const Icon(Icons.restaurant, color: Colors.orange, size: 40),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 15),
-                                    
-                                    // Bilgiler
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            recipe.title,
-                                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            recipe.shortDescription ?? recipe.category,
-                                            style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          
-                                          // İkonlu Bilgi Satırı (V3 Yeniliği)
-                                          Row(
-                                            children: [
-                                              if (recipe.prepTime != null) ...[
-                                                const Icon(Icons.access_time, size: 14, color: Colors.blueGrey),
-                                                const SizedBox(width: 4),
-                                                Text('${recipe.prepTime} dk', style: const TextStyle(fontSize: 12)),
-                                                const SizedBox(width: 12),
-                                              ],
-                                              if (recipe.difficulty != null) ...[
-                                                const Icon(Icons.bar_chart, size: 14, color: Colors.redAccent),
-                                                const SizedBox(width: 4),
-                                                Text(recipe.difficulty!, style: const TextStyle(fontSize: 12)),
-                                              ],
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                                  ],
-                                ),
-                              ),
+            child: _filteredRecipes.isEmpty
+                ? Center(
+                    child: Text(
+                      'Tarif bulunamadı.',
+                      style: GoogleFonts.nunito(color: kTextMuted, fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    itemCount: _filteredRecipes.length,
+                    itemBuilder: (context, index) {
+                      final recipe = _filteredRecipes[index];
+                      return RecipeCard( 
+                        title: recipe.name,
+                        category: recipe.category,
+                        time: '${recipe.prepTime} dk', 
+                        difficulty: recipe.difficulty,
+                        imagePath: recipe.imagePath ?? 'assets/placeholder.png', 
+                        onTap: () {
+                          // Detay sayfasına geçiş işlemi
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RecipeDetailScreen(recipe: recipe),
                             ),
-                          );
+                          ).then((_) => _refreshRecipes());
                         },
-                      ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
+      // YENİ EKLENDİ: Buton Master UI kavislerine ve renklerine uyarlandı.
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final result = await Navigator.push(
+          await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
+            MaterialPageRoute(builder: (context) => AddRecipeScreen()),
           );
-          if (result == true) _refreshRecipes();
+          _refreshRecipes(); // Dönüşte listeyi güncelle
         },
-        icon: const Icon(Icons.add_task),
-        label: const Text('Yeni Tarif'),
+        backgroundColor: kPrimaryLight,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+          side: const BorderSide(color: kPrimaryColor, width: 1.5),
+        ),
+        icon: const Icon(Icons.add, color: kPrimaryColor),
+        label: Text(
+          'Yeni Tarif',
+          style: GoogleFonts.nunito(
+            color: kPrimaryColor,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
     );
   }

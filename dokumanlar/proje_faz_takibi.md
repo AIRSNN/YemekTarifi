@@ -79,3 +79,9 @@
 - `lib/screens/home_screen.dart` dosyasi arama cubugu, kategori filtreleri ve bellekte anlik filtreleme yapan listeleme akisiyla yenilendi.
 - Ana ekranda kategoriye ve arama metnine gore filtrelenmis tarif listesi gosterilecek sekilde `_allRecipes` ve `_filteredRecipes` yapisi kuruldu.
 - `lib/screens/recipe_detail_screen.dart` dosyasina secili tarifin kategorisini gosteren kategori rozeti eklendi.
+
+## Faz: Master UI Entegrasyonu - Adım 1
+- Arayuz sadelestirildi. `lib/widgets/recipe_card.dart` bileseni olusturuldu ve `lib/screens/home_screen.dart` dosyasi yeni mimariye gore bastan yazildi.
+
+## Faz: Master UI Entegrasyonu - Adım 2
+- `home_screen.dart` dosyasındaki model ve veritabanı değişken uyumsuzlukları (isim farklılıkları ve singleton yapısı) düzeltildi. `main.dart` içerisindeki const hatasını gidermek için yapıcı (constructor) eklendi.
