@@ -112,3 +112,6 @@
 
 ## Faz: Master UI Entegrasyonu - Adım 10 (Düzenle ve Sil İşlemleri)
 - `edit_recipe_screen.dart` sayfası `MasterLayout` mimarisine ve Master UI standartlarına uygun şekilde baştan yazıldı. `recipe_detail_screen.dart` sayfasındaki Düzenle ve Sil ikonlarına işlevsellik kazandırıldı. Silme işlemi için onay diyaloğu eklendi. Düzenleme sonrası detay sayfasının anlık güncellenmesi sağlandı.
+
+## Faz: Master UI Entegrasyonu - Adım 11 (Detay Ekranı Master UI Dönüşümü)
+- `recipe_detail_screen.dart` sayfası güncellendi. Uzun kaydırma listesi yerine Master UI standartlarında Sekmeli (Tab) yapıya geçildi. Zorluk derecesi için kesik ilerleme çubukları (Segmented Bar) entegre edildi. Tasarım dergi kapağı (Tasarım 32) yerleşimine yaklaştırıldı.
