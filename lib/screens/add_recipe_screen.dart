@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart'; 
+import 'package:image_picker/image_picker.dart';
 import '../models/recipe_model.dart';
 import '../database/database_helper.dart';
 import '../widgets/master_layout.dart';
@@ -28,18 +28,31 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   String _selectedCategory = 'Ana Yemek';
   String _selectedDifficulty = 'Orta';
-  
-  File? _selectedImageFile; 
+
+  File? _selectedImageFile;
 
   final List<String> _categories = [
-    'Çorba', 'Ana Yemek', 'Sebze Yemeği', 'Et Yemeği', 
-    'Baklagil', 'Dolma-Sarma', 'Hamur İşi', 'Pilav', 'Meze', 
+    'Çorba', 'Ana Yemek', 'Sebze Yemeği', 'Et Yemeği',
+    'Baklagil', 'Dolma-Sarma', 'Hamur İşi', 'Pilav', 'Meze',
     'Salata', 'Kahvaltılık', 'Tatlı'
   ];
 
   final List<String> _difficulties = ['Kolay', 'Orta', 'Zor'];
 
-  // YENİ EKLENDİ: Master UI Standart Form Etiketi (Kutunun dışında ve üstünde)
+  // BELLEK YÖNETİMİ: Ekran kapandığında tüm controller'ları RAM'den temizle
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _shortDescController.dispose();
+    _prepTimeController.dispose();
+    _cookTimeController.dispose();
+    _servingsController.dispose();
+    _caloriesController.dispose();
+    _ingredientsController.dispose();
+    _instructionsController.dispose();
+    super.dispose();
+  }
+
   Widget _buildLabeledField(String label, Widget field, Color textMuted) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,21 +62,26 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           child: Text(
             label.toUpperCase(),
             style: GoogleFonts.nunito(
-              fontSize: 12, 
-              fontWeight: FontWeight.w800, 
-              color: textMuted, 
-              letterSpacing: 0.5
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: textMuted,
+              letterSpacing: 0.5,
             ),
           ),
         ),
         field,
-        const SizedBox(height: 24), // Her alan arasına standart boşluk
+        const SizedBox(height: 24),
       ],
     );
   }
 
-  // GÜNCELLENDİ: Sadece kutunun iç tasarımı (Label artık dışarıda)
-  InputDecoration _buildInputDecoration(IconData icon, Color surfaceColor, Color borderColor, Color primaryColor, Color textMuted) {
+  InputDecoration _buildInputDecoration(
+    IconData icon,
+    Color surfaceColor,
+    Color borderColor,
+    Color primaryColor,
+    Color textMuted,
+  ) {
     return InputDecoration(
       prefixIcon: Icon(icon, color: textMuted, size: 20),
       filled: true,
@@ -91,7 +109,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (image != null) {
       setState(() {
         _selectedImageFile = File(image.path);
@@ -101,7 +119,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   void _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
-      
       String? finalImageName;
       if (_selectedImageFile != null) {
         finalImageName = await _dbHelper.saveImageLocally(_selectedImageFile!);
@@ -118,12 +135,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         cookTime: int.tryParse(_cookTimeController.text) ?? 0,
         servings: int.tryParse(_servingsController.text) ?? 0,
         calories: int.tryParse(_caloriesController.text) ?? 0,
-        coverImage: finalImageName, 
+        coverImage: finalImageName,
         createdAt: DateTime.now().toIso8601String(),
       );
 
+      // Veritabanı I/O işlemi
       await _dbHelper.createRecipe(newRecipe);
-      Navigator.pop(context); 
+      
+      // ASENKRON GÜVENLİK BARIYERİ: İşlem bitene kadar ekran kapatıldıysa hata verme
+      if (!mounted) return; 
+      
+      Navigator.pop(context);
     }
   }
 
@@ -149,12 +171,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
+
                   // 1. Resim Ekleme Alanı
                   _buildLabeledField(
-                    'Vitrin Resmi', 
+                    'Vitrin Resmi',
                     GestureDetector(
-                      onTap: _pickImage, 
+                      onTap: _pickImage,
                       child: Container(
                         width: double.infinity,
                         height: 200,
@@ -182,35 +204,42 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                                   const SizedBox(height: 12),
                                   Text(
                                     'Bilgisayardan Seç',
-                                    style: GoogleFonts.nunito(color: textMuted, fontSize: 16, fontWeight: FontWeight.w700),
+                                    style: GoogleFonts.nunito(
+                                      color: textMuted,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ],
                               ),
                       ),
-                    ), 
-                    textMuted
+                    ),
+                    textMuted,
                   ),
 
                   // 2. Başlık ve Kısa Açıklama
                   _buildLabeledField(
-                    'Yemek Adı', 
+                    'Yemek Adı',
                     TextFormField(
                       controller: _titleController,
                       style: TextStyle(color: textDark),
-                      decoration: _buildInputDecoration(Icons.restaurant_menu, surfaceColor, borderColor, primaryColor, textMuted),
-                      validator: (value) => value == null || value.isEmpty ? 'Yemek adı zorunludur' : null,
-                    ), 
-                    textMuted
+                      decoration: _buildInputDecoration(
+                          Icons.restaurant_menu, surfaceColor, borderColor, primaryColor, textMuted),
+                      validator: (value) =>
+                          value == null || value.isEmpty ? 'Yemek adı zorunludur' : null,
+                    ),
+                    textMuted,
                   ),
-                  
+
                   _buildLabeledField(
-                    'Kısa Açıklama (İsteğe Bağlı)', 
+                    'Kısa Açıklama (İsteğe Bağlı)',
                     TextFormField(
                       controller: _shortDescController,
                       style: TextStyle(color: textDark),
-                      decoration: _buildInputDecoration(Icons.short_text, surfaceColor, borderColor, primaryColor, textMuted),
-                    ), 
-                    textMuted
+                      decoration: _buildInputDecoration(
+                          Icons.short_text, surfaceColor, borderColor, primaryColor, textMuted),
+                    ),
+                    textMuted,
                   ),
 
                   // 3. Kategori ve Zorluk
@@ -223,11 +252,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                             value: _selectedCategory,
                             dropdownColor: surfaceColor,
                             style: TextStyle(color: textDark),
-                            decoration: _buildInputDecoration(Icons.category, surfaceColor, borderColor, primaryColor, textMuted),
-                            items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat, style: GoogleFonts.nunito()))).toList(),
+                            decoration: _buildInputDecoration(
+                                Icons.category, surfaceColor, borderColor, primaryColor, textMuted),
+                            items: _categories
+                                .map((cat) => DropdownMenuItem(
+                                    value: cat,
+                                    child: Text(cat, style: GoogleFonts.nunito())))
+                                .toList(),
                             onChanged: (val) => setState(() => _selectedCategory = val!),
                           ),
-                          textMuted
+                          textMuted,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -238,11 +272,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                             value: _selectedDifficulty,
                             dropdownColor: surfaceColor,
                             style: TextStyle(color: textDark),
-                            decoration: _buildInputDecoration(Icons.speed, surfaceColor, borderColor, primaryColor, textMuted),
-                            items: _difficulties.map((diff) => DropdownMenuItem(value: diff, child: Text(diff, style: GoogleFonts.nunito()))).toList(),
+                            decoration: _buildInputDecoration(
+                                Icons.speed, surfaceColor, borderColor, primaryColor, textMuted),
+                            items: _difficulties
+                                .map((diff) => DropdownMenuItem(
+                                    value: diff,
+                                    child: Text(diff, style: GoogleFonts.nunito())))
+                                .toList(),
                             onChanged: (val) => setState(() => _selectedDifficulty = val!),
                           ),
-                          textMuted
+                          textMuted,
                         ),
                       ),
                     ],
@@ -258,9 +297,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                             controller: _prepTimeController,
                             keyboardType: TextInputType.number,
                             style: TextStyle(color: textDark),
-                            decoration: _buildInputDecoration(Icons.timer_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                            decoration: _buildInputDecoration(
+                                Icons.timer_outlined, surfaceColor, borderColor, primaryColor, textMuted),
                           ),
-                          textMuted
+                          textMuted,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -271,9 +311,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                             controller: _cookTimeController,
                             keyboardType: TextInputType.number,
                             style: TextStyle(color: textDark),
-                            decoration: _buildInputDecoration(Icons.local_fire_department_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                            decoration: _buildInputDecoration(
+                                Icons.local_fire_department_outlined,
+                                surfaceColor,
+                                borderColor,
+                                primaryColor,
+                                textMuted),
                           ),
-                          textMuted
+                          textMuted,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -284,9 +329,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                             controller: _servingsController,
                             keyboardType: TextInputType.number,
                             style: TextStyle(color: textDark),
-                            decoration: _buildInputDecoration(Icons.people_outline, surfaceColor, borderColor, primaryColor, textMuted),
+                            decoration: _buildInputDecoration(
+                                Icons.people_outline, surfaceColor, borderColor, primaryColor, textMuted),
                           ),
-                          textMuted
+                          textMuted,
                         ),
                       ),
                     ],
@@ -299,9 +345,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       controller: _caloriesController,
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: textDark),
-                      decoration: _buildInputDecoration(Icons.monitor_weight_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                      decoration: _buildInputDecoration(
+                          Icons.monitor_weight_outlined, surfaceColor, borderColor, primaryColor, textMuted),
                     ),
-                    textMuted
+                    textMuted,
                   ),
 
                   // 6. Geniş Alanlar
@@ -311,9 +358,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       controller: _ingredientsController,
                       maxLines: 5,
                       style: TextStyle(color: textDark),
-                      decoration: _buildInputDecoration(Icons.shopping_basket_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                      decoration: _buildInputDecoration(
+                          Icons.shopping_basket_outlined, surfaceColor, borderColor, primaryColor, textMuted),
                     ),
-                    textMuted
+                    textMuted,
                   ),
 
                   _buildLabeledField(
@@ -322,11 +370,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       controller: _instructionsController,
                       maxLines: 7,
                       style: TextStyle(color: textDark),
-                      decoration: _buildInputDecoration(Icons.menu_book, surfaceColor, borderColor, primaryColor, textMuted),
+                      decoration: _buildInputDecoration(
+                          Icons.menu_book, surfaceColor, borderColor, primaryColor, textMuted),
                     ),
-                    textMuted
+                    textMuted,
                   ),
-                  
+
                   const SizedBox(height: 8),
 
                   // 7. Kaydet Butonu
