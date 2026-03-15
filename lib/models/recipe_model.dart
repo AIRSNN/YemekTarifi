@@ -1,27 +1,27 @@
 class Recipe {
-  final int? id;
-  final String title;
-  final String? shortDescription;
-  final String category;
-  final String? ingredients;
-  final String? instructions;
-  final String? coverImage;
-  final int? prepTime;
-  final int? cookTime;
-  final int? servings;
-  final String? difficulty;
-  final String? tags;
-  final bool isFavorite;
-  final double? ratingScore;
-  final int reviewCount;
-  final int? calories;
-  final String? protein;
-  final String? fat;
-  final String? carbs;
-  final bool isDailySpecial;
-  final int viewCount;
-  final String createdAt;
-  final String? updatedAt;
+  int? id;
+  String title;
+  String? shortDescription;
+  String category;
+  String? ingredients;
+  String? instructions;
+  String? coverImage;
+  int? prepTime;
+  int? cookTime;
+  int? servings;
+  String? difficulty;
+  String? tags;
+  int isFavorite;
+  double? ratingScore;
+  int reviewCount;
+  int? calories;
+  String? protein;
+  String? fat;
+  String? carbs;
+  int isDailySpecial;
+  int viewCount;
+  String createdAt;
+  String? updatedAt;
 
   Recipe({
     this.id,
@@ -36,47 +36,20 @@ class Recipe {
     this.servings,
     this.difficulty,
     this.tags,
-    this.isFavorite = false,
+    this.isFavorite = 0,
     this.ratingScore,
     this.reviewCount = 0,
     this.calories,
     this.protein,
     this.fat,
     this.carbs,
-    this.isDailySpecial = false,
+    this.isDailySpecial = 0,
     this.viewCount = 0,
     required this.createdAt,
     this.updatedAt,
   });
 
-  factory Recipe.fromMap(Map<String, dynamic> map) {
-    return Recipe(
-      id: map['id'] as int?,
-      title: map['title'] as String,
-      shortDescription: map['short_description'] as String?,
-      category: map['category'] as String,
-      ingredients: map['ingredients'] as String?,
-      instructions: map['instructions'] as String?,
-      coverImage: map['cover_image'] as String?,
-      prepTime: map['prep_time'] as int?,
-      cookTime: map['cook_time'] as int?,
-      servings: map['servings'] as int?,
-      difficulty: map['difficulty'] as String?,
-      tags: map['tags'] as String?,
-      isFavorite: (map['is_favorite'] ?? 0) == 1,
-      ratingScore: map['rating_score'] as double?,
-      reviewCount: map['review_count'] as int? ?? 0,
-      calories: map['calories'] as int?,
-      protein: map['protein'] as String?,
-      fat: map['fat'] as String?,
-      carbs: map['carbs'] as String?,
-      isDailySpecial: (map['is_daily_special'] ?? 0) == 1,
-      viewCount: map['view_count'] as int? ?? 0,
-      createdAt: map['created_at'] as String,
-      updatedAt: map['updated_at'] as String?,
-    );
-  }
-
+  // Veritabanına (SQLite) yazmak için JSON'a çevirme metodu
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -91,17 +64,100 @@ class Recipe {
       'servings': servings,
       'difficulty': difficulty,
       'tags': tags,
-      'is_favorite': isFavorite ? 1 : 0,
+      'is_favorite': isFavorite,
       'rating_score': ratingScore,
       'review_count': reviewCount,
       'calories': calories,
       'protein': protein,
       'fat': fat,
       'carbs': carbs,
-      'is_daily_special': isDailySpecial ? 1 : 0,
+      'is_daily_special': isDailySpecial,
       'view_count': viewCount,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
+  }
+
+  // Veritabanından (SQLite) okunan Map verisini nesneye (Object) çevirme metodu
+  factory Recipe.fromMap(Map<String, dynamic> map) {
+    return Recipe(
+      id: map['id'],
+      title: map['title'],
+      shortDescription: map['short_description'],
+      category: map['category'],
+      ingredients: map['ingredients'],
+      instructions: map['instructions'],
+      coverImage: map['cover_image'],
+      prepTime: map['prep_time'],
+      cookTime: map['cook_time'],
+      servings: map['servings'],
+      difficulty: map['difficulty'],
+      tags: map['tags'],
+      isFavorite: map['is_favorite'] ?? 0,
+      ratingScore: map['rating_score'],
+      reviewCount: map['review_count'] ?? 0,
+      calories: map['calories'],
+      protein: map['protein'],
+      fat: map['fat'],
+      carbs: map['carbs'],
+      isDailySpecial: map['is_daily_special'] ?? 0,
+      viewCount: map['view_count'] ?? 0,
+      createdAt: map['created_at'],
+      updatedAt: map['updated_at'],
+    );
+  }
+
+  // --- BURASI EKLENDİ ---
+  // Nesnenin bir kopyasını oluşturup istenen alanları güncelleyen metod
+  Recipe copyWith({
+    int? id,
+    String? title,
+    String? shortDescription,
+    String? category,
+    String? ingredients,
+    String? instructions,
+    String? coverImage,
+    int? prepTime,
+    int? cookTime,
+    int? servings,
+    String? difficulty,
+    String? tags,
+    int? isFavorite,
+    double? ratingScore,
+    int? reviewCount,
+    int? calories,
+    String? protein,
+    String? fat,
+    String? carbs,
+    int? isDailySpecial,
+    int? viewCount,
+    String? createdAt,
+    String? updatedAt,
+  }) {
+    return Recipe(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      shortDescription: shortDescription ?? this.shortDescription,
+      category: category ?? this.category,
+      ingredients: ingredients ?? this.ingredients,
+      instructions: instructions ?? this.instructions,
+      coverImage: coverImage ?? this.coverImage,
+      prepTime: prepTime ?? this.prepTime,
+      cookTime: cookTime ?? this.cookTime,
+      servings: servings ?? this.servings,
+      difficulty: difficulty ?? this.difficulty,
+      tags: tags ?? this.tags,
+      isFavorite: isFavorite ?? this.isFavorite,
+      ratingScore: ratingScore ?? this.ratingScore,
+      reviewCount: reviewCount ?? this.reviewCount,
+      calories: calories ?? this.calories,
+      protein: protein ?? this.protein,
+      fat: fat ?? this.fat,
+      carbs: carbs ?? this.carbs,
+      isDailySpecial: isDailySpecial ?? this.isDailySpecial,
+      viewCount: viewCount ?? this.viewCount,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 }

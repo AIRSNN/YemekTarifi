@@ -15,13 +15,17 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('yemek_kitabi_v3.db');
+    // Veritabanı adı en kısa ve yeni haliyle güncellendi.
+    _database = await _initDB('yk.db');
     return _database!;
   }
 
   Future<Database> _initDB(String fileName) async {
-    sqfliteFfiInit();
-    var databaseFactory = databaseFactoryFfi;
+    // sqfliteFfiInit() buradan kaldirildi, sadece main.dart'ta cagiriliyor.
+    // Ancak masaustunde calisirken sqflite databaseFactory kullanmali:
+    var factory = (Platform.isWindows || Platform.isLinux) 
+        ? databaseFactoryFfi 
+        : databaseFactory;
 
     final docDirPath = await getApplicationDocumentsDirectory();
     final dbPath = join(docDirPath.path, 'YemekKitabiApp', 'Database', fileName);
@@ -31,7 +35,7 @@ class DatabaseHelper {
       await dbFolder.create(recursive: true);
     }
 
-    return await databaseFactory.openDatabase(
+    return await factory.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
         version: 1,
@@ -114,6 +118,28 @@ class DatabaseHelper {
   Future<List<Recipe>> readAllRecipes() async {
     final db = await instance.database;
     final result = await db.query('recipes', orderBy: 'created_at DESC');
+    return result.map((json) => Recipe.fromMap(json)).toList();
+  }
+
+  Future<List<Recipe>> readFavoriteRecipes() async {
+    final db = await instance.database;
+    final result = await db.query(
+      'recipes',
+      where: 'is_favorite = ?',
+      whereArgs: [1],
+      orderBy: 'created_at DESC',
+    );
+    return result.map((json) => Recipe.fromMap(json)).toList();
+  }
+
+  Future<List<Recipe>> readRecipesByCategory(String category) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'recipes',
+      where: 'category = ?',
+      whereArgs: [category],
+      orderBy: 'created_at DESC',
+    );
     return result.map((json) => Recipe.fromMap(json)).toList();
   }
 

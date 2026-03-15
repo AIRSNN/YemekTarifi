@@ -4,10 +4,13 @@ import 'dart:io';
 import 'screens/home_screen.dart';
 
 void main() {
-  // Windows ve Linux masaüstü ortamları için SQLite FFI başlatması
+  // Sistem bilesenlerinin baslatilmasi (Flutter motoru ile iletisim icin gerekli olabilir)
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Windows ve Linux masaustu ortamlari icin SQLite FFI baslatmasi
   if (Platform.isWindows || Platform.isLinux) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
+    sqfliteFfiInit(); // Sadece main'de cagrilir
+    databaseFactory = databaseFactoryFfi; // Global atama yapilir
   }
 
   runApp(const YemekKitabiApp());

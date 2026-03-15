@@ -17,6 +17,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
+  // Mevcut Controller'lar
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _shortDescController = TextEditingController();
   final TextEditingController _prepTimeController = TextEditingController();
@@ -25,6 +26,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _ingredientsController = TextEditingController();
   final TextEditingController _instructionsController = TextEditingController();
+
+  // Yeni Eklenen Controller'lar (Aşama 1)
+  final TextEditingController _proteinController = TextEditingController();
+  final TextEditingController _fatController = TextEditingController();
+  final TextEditingController _carbsController = TextEditingController();
+  final TextEditingController _tagsController = TextEditingController();
 
   String _selectedCategory = 'Ana Yemek';
   String _selectedDifficulty = 'Orta';
@@ -50,6 +57,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     _caloriesController.dispose();
     _ingredientsController.dispose();
     _instructionsController.dispose();
+    
+    // Yeni Controller'ların bellekten temizlenmesi
+    _proteinController.dispose();
+    _fatController.dispose();
+    _carbsController.dispose();
+    _tagsController.dispose();
+    
     super.dispose();
   }
 
@@ -135,6 +149,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         cookTime: int.tryParse(_cookTimeController.text) ?? 0,
         servings: int.tryParse(_servingsController.text) ?? 0,
         calories: int.tryParse(_caloriesController.text) ?? 0,
+        
+        // Yeni veri alanlarının nesneye aktarımı
+        protein: _proteinController.text.isNotEmpty ? _proteinController.text : null,
+        fat: _fatController.text.isNotEmpty ? _fatController.text : null,
+        carbs: _carbsController.text.isNotEmpty ? _carbsController.text : null,
+        tags: _tagsController.text.isNotEmpty ? _tagsController.text : null,
+        
         coverImage: finalImageName,
         createdAt: DateTime.now().toIso8601String(),
       );
@@ -338,20 +359,80 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     ],
                   ),
 
-                  // 5. Kalori
+                  // 5. Besin Değerleri (Matris Yapısı)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildLabeledField(
+                          'Enerji (Kcal)',
+                          TextFormField(
+                            controller: _caloriesController,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(color: textDark),
+                            decoration: _buildInputDecoration(
+                                Icons.bolt, surfaceColor, borderColor, primaryColor, textMuted),
+                          ),
+                          textMuted,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildLabeledField(
+                          'Protein (g)',
+                          TextFormField(
+                            controller: _proteinController,
+                            style: TextStyle(color: textDark),
+                            decoration: _buildInputDecoration(
+                                Icons.fitness_center, surfaceColor, borderColor, primaryColor, textMuted),
+                          ),
+                          textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildLabeledField(
+                          'Yağ (g)',
+                          TextFormField(
+                            controller: _fatController,
+                            style: TextStyle(color: textDark),
+                            decoration: _buildInputDecoration(
+                                Icons.water_drop_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                          ),
+                          textMuted,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildLabeledField(
+                          'Karbonhidrat (g)',
+                          TextFormField(
+                            controller: _carbsController,
+                            style: TextStyle(color: textDark),
+                            decoration: _buildInputDecoration(
+                                Icons.grain, surfaceColor, borderColor, primaryColor, textMuted),
+                          ),
+                          textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // 6. Etiketler (Tags)
                   _buildLabeledField(
-                    'Enerji (Kcal)',
+                    'Etiketler (Virgülle ayırın: vegan, glutensiz vs.)',
                     TextFormField(
-                      controller: _caloriesController,
-                      keyboardType: TextInputType.number,
+                      controller: _tagsController,
                       style: TextStyle(color: textDark),
                       decoration: _buildInputDecoration(
-                          Icons.monitor_weight_outlined, surfaceColor, borderColor, primaryColor, textMuted),
+                          Icons.local_offer_outlined, surfaceColor, borderColor, primaryColor, textMuted),
                     ),
                     textMuted,
                   ),
 
-                  // 6. Geniş Alanlar
+                  // 7. Geniş Alanlar (Malzemeler & Hazırlanışı)
                   _buildLabeledField(
                     'Malzemeler',
                     TextFormField(
@@ -378,7 +459,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
                   const SizedBox(height: 8),
 
-                  // 7. Kaydet Butonu
+                  // 8. Kaydet Butonu
                   SizedBox(
                     width: double.infinity,
                     height: 56,
